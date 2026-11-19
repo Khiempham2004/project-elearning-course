@@ -12,6 +12,9 @@ import { LearningActivity, StudentLearningService } from '../../../core/services
 export class TeacherDashboardComponent implements OnInit {
   readonly activities = signal<LearningActivity[]>([]);
   readonly courseCount = signal(0);
+  readonly approvedCourseCount = signal(0);
+  readonly studentCount = signal(0);
+  readonly lessonCount = signal(0);
   readonly loading = signal(true);
   readonly error = signal('');
 
@@ -21,7 +24,10 @@ export class TeacherDashboardComponent implements OnInit {
     this.learning.getManageActivities().subscribe({
       next: ({ data }) => {
         this.activities.set(data.activities);
-        this.courseCount.set(data.courses.length);
+        this.courseCount.set(data.stats.courseCount);
+        this.approvedCourseCount.set(data.stats.approvedCourseCount);
+        this.studentCount.set(data.stats.studentCount);
+        this.lessonCount.set(data.stats.lessonCount);
         this.loading.set(false);
       },
       error: (error) => {

@@ -47,4 +47,9 @@ export class CorusesService {
   getCategories(): Observable<any> {
     return this.http.get<any>(`${this.apiCourse}/categories?activeOnly=true`);
   }
+
+  getLessons(courseId: string): Observable<any> { return this.http.get<any>(`${this.apiCourse}/${courseId}/lessons`); }
+  createLesson(courseId: string, payload: any): Observable<any> { return this.http.post<any>(`${this.apiCourse}/${courseId}/lessons`, payload); }
+  updateLesson(courseId: string, lessonId: string, payload: any): Observable<any> { return this.http.put<any>(`${this.apiCourse}/${courseId}/lessons/${lessonId}`, payload); }
+  deleteLesson(courseId: string, lessonId: string): Observable<any> { return this.http.delete<any>(`${this.apiCourse}/${courseId}/lessons/${lessonId}`); }
 }

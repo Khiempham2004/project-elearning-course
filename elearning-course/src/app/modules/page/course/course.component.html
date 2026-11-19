@@ -61,6 +61,23 @@
         </div>
 
         <div nz-col [nzSpan]="12">
+          <nz-form-item><nz-form-label>Cấp độ</nz-form-label><nz-form-control>
+            <nz-select class="w-100" formControlName="level"><nz-option nzValue="beginner" nzLabel="Cơ bản"/><nz-option nzValue="intermediate" nzLabel="Trung cấp"/><nz-option nzValue="advanced" nzLabel="Nâng cao"/></nz-select>
+          </nz-form-control></nz-form-item>
+        </div>
+        <div nz-col [nzSpan]="24">
+          <nz-form-item><nz-form-label>Mô tả khóa học</nz-form-label><nz-form-control>
+            <textarea nz-input rows="3" formControlName="description" placeholder="Mục tiêu và nội dung khóa học"></textarea>
+          </nz-form-control></nz-form-item>
+        </div>
+        <div nz-col [nzSpan]="24">
+          <nz-form-item><nz-form-label>Ảnh thumbnail</nz-form-label><nz-form-control>
+            <input type="file" accept="image/*" (change)="uploadThumbnail($event)" [disabled]="status === 'DETAIL'" />
+            @if (form.get('thumbnail')?.value) { <img [src]="form.get('thumbnail')?.value" alt="Xem trước thumbnail" style="display:block;max-width:220px;max-height:130px;margin-top:8px;object-fit:cover;border-radius:8px" /> }
+          </nz-form-control></nz-form-item>
+        </div>
+
+        <div nz-col [nzSpan]="12">
           <nz-form-item>
             <nz-form-label nzRequired>Mã giáo viên</nz-form-label>
 
@@ -150,6 +167,8 @@
               <nz-select class="w-100" formControlName="approvalStatus"><nz-option nzValue="pending" nzLabel="Chờ duyệt"/><nz-option nzValue="approved" nzLabel="Đã duyệt"/><nz-option nzValue="rejected" nzLabel="Từ chối"/></nz-select>
             </nz-form-control></nz-form-item>
           </div>
+        } @else {
+          <div nz-col [nzSpan]="12"><nz-form-item><nz-form-label>Trạng thái khóa học</nz-form-label><nz-form-control><nz-select class="w-100" formControlName="approvalStatus"><nz-option nzValue="draft" nzLabel="Bản nháp"/><nz-option nzValue="pending" nzLabel="Gửi admin duyệt"/></nz-select></nz-form-control></nz-form-item></div>
         }
       </div>
 
@@ -158,7 +177,7 @@
           Hủy
         </button>
         <button nz-button nzType="primary" type="button" (click)="handleSubmit()">
-          {{ status === 'CREATE' ? 'Lưu' : 'Cập nhật' }}
+          {{ submitLabel }}
         </button>
       </div>
     </form>

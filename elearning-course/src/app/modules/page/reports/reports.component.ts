@@ -51,8 +51,9 @@ export class ReportsComponent implements OnInit {
   getAllStudent() {
     this.studentService.getAllStudents().subscribe({
       next: (res: any) => {
-        this.students = res || [];
-        console.log('tong  hoc vien', this.students.length);
+        this.students = res?.data || [];
+        this.statistics.totalStudents = res?.pagination?.totalStudents ?? this.students.length;
+        console.log('tong  hoc vien', this.statistics.totalStudents);
       },
     });
   }
@@ -61,7 +62,6 @@ export class ReportsComponent implements OnInit {
       next: (res: any) => {
         this.teachers = res || [];
         console.log('danh sach giang vien : ', this.teachers);
-
         console.log('tong giao vien', this.teachers.length);
       },
     });

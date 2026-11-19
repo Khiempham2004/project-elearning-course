@@ -8,6 +8,12 @@ const learningActivitySchema = new mongoose.Schema({
     startsAt: { type: Date },
     dueAt: { type: Date },
     durationMinutes: { type: Number, min: 1 },
+    passingScore: { type: Number, min: 0, max: 100, default: 60 },
+    questions: [{
+        prompt: { type: String, required: true, trim: true },
+        options: [{ type: String, trim: true }],
+        correctAnswer: { type: Number, min: 0 },
+    }],
     location: { type: String, default: '' },
     meetingUrl: { type: String, default: '' },
     status: { type: String, enum: ['published', 'draft'], default: 'published' },

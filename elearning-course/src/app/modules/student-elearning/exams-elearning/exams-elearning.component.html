@@ -40,11 +40,16 @@
             date:'dd/MM/yyyy HH:mm' }}</span>@if (item.submission.score !== undefined) { <strong>{{
             item.submission.score }}/100</strong> }@if (item.submission.feedback) { <p>{{ item.submission.feedback }}
           </p> }</div> }
+        @if (item.questions?.length) { <section class="quiz-questions"><h3>Trắc nghiệm · {{ item.questions?.length ?? 0 }} câu · Điểm đạt {{ item.passingScore ?? 60 }}/100</h3>
+          @for (question of item.questions ?? []; track $index; let questionIndex = $index) { <fieldset><legend>{{ questionIndex + 1 }}. {{ question.prompt }}</legend>@for (option of question.options; track $index; let optionIndex = $index) { <label><input type="radio" [name]="'quiz-' + item._id + '-' + questionIndex" [checked]="(quizAnswers[item._id] || {})[questionIndex] === optionIndex" (change)="selectQuizAnswer(item._id, questionIndex, optionIndex)" [disabled]="!canSubmit(item) || item.submission?.score !== undefined" />{{ option }}</label> }</fieldset> }
+        </section> }
+        @if (!item.questions?.length) {
         <label class="answer-label" [for]="'exam-' + item._id">{{ item.submission ? 'Bài làm đã gửi' : 'Câu trả lời /
           đường dẫn bài làm' }}</label><textarea [id]="'exam-' + item._id" rows="4"
           [placeholder]="item.submission ? '' : 'Nhập câu trả lời hoặc link bài làm...'"
           [value]="answers[item._id] || item.submission?.answer || ''" (input)="setAnswer(item._id, $event)"
           [disabled]="!canSubmit(item) || item.submission?.score !== undefined"></textarea>
+        }
         @if (item.submission?.score !== undefined) { <p class="locked-note">Bài kiểm tra đã được chấm và khóa chỉnh sửa.
         </p> } @else if (canSubmit(item)) { <button class="submit-button" type="button" (click)="submit(item)"
           [disabled]="submitting() === item._id">{{ submitting() === item._id ? 'Đang gửi...' : item.submission ? 'Cập

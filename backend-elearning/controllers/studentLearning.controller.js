@@ -2,21 +2,14 @@ const mongoose = require("mongoose");
 const Enrollment = require("../models/enrollment.model.js");
 const LearningActivity = require("../models/learningActivity.model.js");
 const { courseModel } = require("../models/course.model.js");
-const TeacherModel = require("../models/teacher.model.js");
+const { findTeacherProfile } = require("../utils/teacherProfileLookup.js");
 
 const isStudent = (req) => req.user?.role === "student";
 const isStaff = (req) => ["admin", "teacher"].includes(req.user?.role);
 
 const getTeacherScope = async (user) => {
     const username = String(user.userName || '').trim();
-    const email = String(user.email || '').trim();
-    const alternatives = [];
-    if (email) {
-        const escapedEmail = email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        alternatives.push({ email: { $regex: `^${escapedEmail}$`, $options: 'i' } });
-    }
-    if (username) alternatives.push({ teacherCode: username });
-    const teacher = alternatives.length ? await TeacherModel.findOne({ $or: alternatives }).lean() : null;
+    const teacher = await findTeacherProfile(user);
     if (!teacher) return { error: 'Tài khoản giảng viên chưa được liên kết hồ sơ giảng viên. Vui lòng nhờ admin tạo hồ sơ với email hoặc mã giảng viên khớp tài khoản.' };
     if (teacher.status === false) return { error: 'Hồ sơ giảng viên của bạn đang bị khóa. Vui lòng liên hệ admin.' };
 

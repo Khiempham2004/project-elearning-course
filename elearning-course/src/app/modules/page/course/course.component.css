@@ -1,0 +1,146 @@
+::host {
+    ::ng-deep .ant-modal-content {
+        border-radius: 16px !important;
+        overflow: hidden;
+    }
+
+    ::ng-deep .ant-input {
+        font-size: 15px;
+        color: #222 !important;
+    }
+
+    ::ng-deep .ant-input:disabled {
+        color: #222 !important;
+        -webkit-text-fill-color: #222 !important;
+        background-color: #f5f5f5 !important;
+        font-size: 15px;
+        opacity: 1 !important;
+    }
+
+    ::ng-deep .ant-select-disabled .ant-select-selector {
+        color: #222 !important;
+        font-weight: 500;
+        opacity: 1 !important;
+        font-size: 15px;
+    }
+
+    ::ng-deep .ant-picker-disabled {
+        font-size: 15px;
+        color: #222 !important;
+        -webkit-text-fill-color: #222 !important;
+        font-weight: 500;
+    }
+
+    ::ng-deep .ant-form-item-label>label {
+        font-weight: bold;
+    }
+}
+
+::ng-deep .ant-modal-title {
+    justify-content: center;
+    text-align: center;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+::ng-deep .select-pagination .ant-select-selector {
+    border-radius: 8px !important;
+}
+
+::ng-deep .ant-modal-content {
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+::ng-deep .ant-pagination-item {
+    border-radius: 10px !important;
+    overflow: hidden;
+}
+::ng-deep .ant-picker{
+    border-radius: 8px !important;
+    overflow: hidden;
+}
+
+::ng-deep .ant-select-selector{
+    border-radius: 8px !important;
+}
+
+.course-title {
+    font-size: 22px;
+    color: #087EED;
+    font-weight: bold;
+    margin-left: 20px;
+}
+
+.class-table-coruse {
+    margin-top: 20px;
+}
+
+input {
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button {
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 10px 12px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+tr th {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-weight: 600;
+}
+
+tr td {
+    justify-content: center;
+    align-items: center;
+}
+
+th {
+    background: #f5f5f5;
+    font-weight: bold;
+}
+
+tr:hover {
+    background: #fafafa;
+}
+
+.pagination-course {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-top: 20px;
+    margin-left: 20px;
+}
+
+.header-course{
+    margin-left: 20px;
+}

@@ -1,0 +1,71 @@
+{
+  "system": [
+    {
+      "functionCode": "USER_VIEW",
+      "functionName": "Xem danh sách người dùng",
+      "directoryId": 1,
+      "functionType": "PAGE",
+      "functionUrl": "/system/users",
+      "description": "Hiển thị danh sách người dùng",
+      "sortOrder": 1,
+      "status": "true",
+      "id": "ndEUUsFAqzg"
+    },
+    {
+      "functionCode": "USER_CREATE",
+      "functionName": "Thêm người dùng",
+      "directoryId": 1,
+      "functionType": "ACTION",
+      "functionUrl": null,
+      "description": "Thêm tài khoản người dùng mới",
+      "sortOrder": 2,
+      "status": "true",
+      "id": "OMot7Bl0qAU"
+    },
+    {
+      "functionCode": "USER_UPDATE",
+      "functionName": "Cập nhật người dùng",
+      "directoryId": 1,
+      "functionType": "ACTION",
+      "functionUrl": null,
+      "description": "Chỉnh sửa thông tin người dùng",
+      "sortOrder": 3,
+      "status": "true",
+      "id": "MYMJoNPgyPM"
+    },
+    {
+      "functionCode": "USER_DELETE",
+      "functionName": "Xóa người dùng",
+      "directoryId": 1,
+      "functionType": "ACTION",
+      "functionUrl": null,
+      "description": "Xóa tài khoản người dùng",
+      "sortOrder": 4,
+      "status": "true",
+      "id": "cnkSbhhP4QI"
+    },
+    {
+      "functionCode": "USER_DETAIL",
+      "functionName": "Detail user",
+      "directoryId": "2",
+      "functionType": "ACTION",
+      "functionUrl": "/user/detail:id",
+      "description": "xem chi tiet nguoi dung",
+      "sortOrder": "3",
+      "status": "true",
+      "id": "vE_Phg83yz0"
+    },
+    {
+      "functionCode": "SYSTEM_CREATE",
+      "functionName": "Tạo mới hệ thống",
+      "directoryId": "2",
+      "functionType": "ACTION",
+      "functionUrl": "/system",
+      "description": "tạo mới hệ thống người dùng",
+      "sortOrder": "2",
+      "status": "true",
+      "id": "OpWnLnJ98p8"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

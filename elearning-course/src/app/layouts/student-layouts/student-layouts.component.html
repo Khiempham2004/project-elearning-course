@@ -1,0 +1,55 @@
+<div class="student-shell">
+  <header class="topbar">
+    <a class="brand" routerLink="/student" aria-label="EduLearn trang chủ">
+      <span class="brand-mark">E</span>
+      <span>Edu<span class="brand-accent">Learn</span></span>
+    </a>
+
+    <div class="account">
+      <app-notifications-center />
+
+      <div class="profile-wrapper">
+        <button class="profile-trigger" type="button" (click)="toggleProfileMenu()"
+          [attr.aria-expanded]="profileMenuOpen()" aria-label="Menu tài khoản">
+          <span class="avatar"><span nz-icon nzType="user"></span></span>
+          <span class="account-name">{{ studentName }}</span>
+          <span nz-icon nzType="down" class="profile-chevron"></span>
+        </button>
+        @if (profileMenuOpen()) {
+        <div class="profile-menu" role="menu">
+          <a routerLink="/student/information" role="menuitem" (click)="closeProfileMenu()"><span nz-icon
+              nzType="user"></span><span>Thông tin cá nhân</span></a>
+          <button type="button" role="menuitem" (click)="logout()"><span nz-icon nzType="logout"></span><span>Đăng
+              xuất</span></button>
+        </div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="sidebar">
+      <div class="sidebar-label">MENU HỌC TẬP</div>
+      <nav class="main-tabs" aria-label="Điều hướng học viên">
+        @for (item of menuItems; track item.label) {
+        <a class="menu-item" [routerLink]="item.routerLink" routerLinkActive="active"
+          [routerLinkActiveOptions]="{exact: item.routerLink === '/student'}">
+          <span class="menu-icon">{{item.icon}}</span>
+          <span>{{item.label}}</span>
+        </a>
+        }
+      </nav>
+
+      <div class="sidebar-note">
+        <span class="note-icon" nz-icon nzType="read"></span>
+        <strong>Góc học tập</strong>
+        <p>Kiên trì mỗi ngày, tiến bộ từng bước.</p>
+      </div>
+      <div class="sidebar-footer">© EduLearn</div>
+    </aside>
+
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

@@ -1,0 +1,20 @@
+const express = require('express');
+const { getDashboard } = require('../controllers/adminDashboard.controller.js');
+const users = require('../controllers/adminUsers.controller.js');
+const categories = require('../controllers/courseCategory.controller.js');
+const enrollments = require('../controllers/adminEnrollment.controller.js');
+
+const router = express.Router();
+router.get('/dashboard', getDashboard);
+router.get('/users', users.listUsers);
+router.post('/users', users.createUser);
+router.put('/users/:id', users.updateUser);
+router.patch('/users/:id', users.updateUser);
+router.delete('/users/:id', users.deleteUser);
+router.get('/categories', categories.listCategories);
+router.post('/categories', categories.createCategory);
+router.put('/categories/:id', categories.updateCategory);
+router.delete('/categories/:id', categories.deleteCategory);
+router.get('/enrollments', enrollments.listEnrollments);
+router.patch('/enrollments/:id', enrollments.updateEnrollment);
+module.exports = router;

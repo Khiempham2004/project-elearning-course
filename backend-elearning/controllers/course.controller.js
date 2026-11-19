@@ -1,14 +1,10 @@
 const mongoose = require('mongoose');
 const { courseModel } = require('../models/course.model.js');
-const TeacherModel = require('../models/teacher.model.js');
+const { findTeacherProfile } = require('../utils/teacherProfileLookup.js');
 
 const teacherIdentity = async (user) => {
-    const email = String(user.email || '').trim();
     const username = String(user.userName || '').trim();
-    const alternatives = [];
-    if (email) alternatives.push({ email: { $regex: `^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } });
-    if (username) alternatives.push({ teacherCode: username });
-    const profile = alternatives.length ? await TeacherModel.findOne({ $or: alternatives }).lean() : null;
+    const profile = await findTeacherProfile(user);
     if (!profile || profile.status === false) return null;
     const ids = [profile.teacherCode, String(profile._id), String(user._id), username].filter(Boolean).map(String);
     return { profile, identifiers: [...new Set(ids.flatMap((id) => [id, id.toLowerCase(), id.toUpperCase()]))] };

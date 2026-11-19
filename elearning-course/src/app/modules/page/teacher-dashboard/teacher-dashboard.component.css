@@ -6,14 +6,14 @@
 .welcome h1 { margin: 0; font-size: 28px; }
 .welcome p:last-child { margin: 8px 0 0; color: #e2edf7; }
 .welcome>a,.quick-actions>a { padding: 11px 15px; border-radius: 9px; background: #fff; color: #175cd3; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; }
-.stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; margin: 18px 0; }
+.stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin: 18px 0; }
 .stats article,.latest { padding: 18px; border: 1px solid #e5ebf2; border-radius: 13px; background: #fff; }
 .stats span,.stats strong,.stats small { display: block; }
 .stats span { color: #667085; font-size: 12px; }
 .stats strong { margin: 10px 0 4px; font-size: 27px; }
 .stats small,.latest article small { color: #8792a2; font-size: 11px; }
 .quick-actions,.latest>div { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.quick-actions { margin: 20px 0; padding: 20px; border: 1px solid #e5ebf2; border-radius: 13px; background: #fff; }
+.quick-actions { margin: 20px 0; padding: 20px; border: 1px solid #e5ebf2; border-radius: 13px; background: #fff; flex-wrap: wrap; }
 .quick-actions h2,.latest h2 { margin: 0; font-size: 18px; }
 .quick-actions .eyebrow { margin-bottom: 5px; }
 .quick-actions>a { background: #2563eb; color: #fff; }

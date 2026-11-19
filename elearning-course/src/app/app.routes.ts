@@ -15,6 +15,7 @@ import { StudentLayoutsComponent } from './layouts/student-layouts/student-layou
 import { StudentElearningComponent } from './modules/student-elearning/student-elearning.component';
 import { TeacherLayoutComponent } from './layouts/teacher-layout/teacher-layout.component';
 import { CourseLayoutComponent } from './layouts/course-layout/course-layout.component';
+import { TeacherLessonsComponent } from './modules/page/teacher-lessons/teacher-lessons.component';
 
 export const routes: Routes = [
   {
@@ -259,6 +260,7 @@ export const routes: Routes = [
           ),
       },
       { path: 'courses', component: CourseComponent },
+      { path: 'lessons', component: TeacherLessonsComponent },
     ],
   },
   {

@@ -26,6 +26,8 @@ export interface LearningActivity {
   startsAt?: string | null;
   dueAt?: string | null;
   durationMinutes?: number | null;
+  passingScore?: number;
+  questions?: Array<{ prompt: string; options: string[]; correctAnswer?: number }>;
   location?: string;
   meetingUrl?: string;
   status?: 'published' | 'draft';
@@ -74,6 +76,8 @@ export interface LearningActivityPayload {
   startsAt?: string | null;
   dueAt?: string | null;
   durationMinutes?: number | null;
+  passingScore?: number;
+  questions?: Array<{ prompt: string; options: string[]; correctAnswer: number }>;
   location?: string;
   meetingUrl?: string;
   status?: 'published' | 'draft';
@@ -106,8 +110,8 @@ export class StudentLearningService {
     );
   }
 
-  getManageActivities(): Observable<{ data: { activities: LearningActivity[]; courses: LearningCourse[]; enrollments: ManagedEnrollment[] } }> {
-    return this.http.get<{ data: { activities: LearningActivity[]; courses: LearningCourse[]; enrollments: ManagedEnrollment[] } }>(`${this.api}/activities/manage`);
+  getManageActivities(): Observable<{ data: { stats: { courseCount: number; approvedCourseCount: number; studentCount: number; lessonCount: number; scheduleCount: number; assignmentCount: number; quizCount: number }; activities: LearningActivity[]; courses: LearningCourse[]; enrollments: ManagedEnrollment[] } }> {
+    return this.http.get<{ data: { stats: { courseCount: number; approvedCourseCount: number; studentCount: number; lessonCount: number; scheduleCount: number; assignmentCount: number; quizCount: number }; activities: LearningActivity[]; courses: LearningCourse[]; enrollments: ManagedEnrollment[] } }>(`${this.api}/activities/manage`);
   }
 
   createActivity(activity: LearningActivityPayload): Observable<{ message: string }> {

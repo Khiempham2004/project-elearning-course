@@ -62,8 +62,15 @@ export class LearningActivitiesComponent implements OnInit {
       location: '',
       meetingUrl: '',
       status: 'published',
+      passingScore: 60,
+      questions: [],
     };
   }
+
+  addQuestion(): void { this.form.questions = [...(this.form.questions ?? []), { prompt: '', options: ['', '', '', ''], correctAnswer: 0 }]; }
+  removeQuestion(index: number): void { this.form.questions = (this.form.questions ?? []).filter((_, i) => i !== index); }
+  setQuestionOptions(index: number, text: string): void { const question = this.form.questions?.[index]; if (question) question.options = text.split('\n').map((option) => option.trim()).filter(Boolean); }
+  questionOptionsText(options: string[]): string { return options.join('\n'); }
 
   load(): void {
     this.loading.set(true);
@@ -97,6 +104,8 @@ export class LearningActivitiesComponent implements OnInit {
       startsAt: this.toLocalInput(activity.startsAt),
       dueAt: this.toLocalInput(activity.dueAt),
       durationMinutes: activity.durationMinutes,
+      passingScore: activity.passingScore ?? 60,
+      questions: activity.questions?.map((question) => ({ ...question, correctAnswer: question.correctAnswer ?? 0 })) ?? [],
       location: activity.location ?? '',
       meetingUrl: activity.meetingUrl ?? '',
       status: activity.status ?? 'published',
@@ -116,7 +125,7 @@ export class LearningActivitiesComponent implements OnInit {
       this.error.set('Vui lòng chọn khóa học và nhập tiêu đề.');
       return;
     }
-    if ((this.form.kind === 'schedule' || this.form.kind === 'exam') && !this.form.location?.trim() && !this.form.meetingUrl?.trim()) {
+    if ((this.form.kind === 'schedule' || (this.form.kind === 'exam' && !this.form.questions?.length)) && !this.form.location?.trim() && !this.form.meetingUrl?.trim()) {
       this.error.set(this.form.kind === 'exam' ? 'Bài kiểm tra cần phòng thi hoặc link trực tuyến.' : 'Lịch học cần có phòng học hoặc liên kết lớp để học viên tham gia.');
       return;
     }
@@ -225,6 +234,10 @@ export class LearningActivitiesComponent implements OnInit {
 
   enrollmentStudentName(enrollment: ManagedEnrollment): string {
     return typeof enrollment.studentId === 'string' ? enrollment.studentId : enrollment.studentId.userName;
+  }
+
+  enrollmentStudentEmail(enrollment: ManagedEnrollment): string {
+    return typeof enrollment.studentId === 'string' ? '' : enrollment.studentId.email;
   }
 
   studentName(

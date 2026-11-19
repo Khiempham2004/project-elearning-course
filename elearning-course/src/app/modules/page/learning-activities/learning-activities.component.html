@@ -80,6 +80,10 @@
         @if (form.kind === "exam") {
         <label>Thời lượng bài thi (phút)<input name="durationMinutes" type="number" min="1"
             [(ngModel)]="form.durationMinutes" placeholder="VD: 60" /></label>
+        <label>Điểm đạt<input name="passingScore" type="number" min="0" max="100" [(ngModel)]="form.passingScore" /></label>
+        <div class="wide quiz-builder"><div class="quiz-builder-heading"><strong>Câu hỏi trắc nghiệm (không bắt buộc)</strong><button type="button" (click)="addQuestion()">＋ Thêm câu</button></div>
+          @for (question of form.questions ?? []; track $index) { <article class="quiz-question"><label>Câu hỏi {{ $index + 1 }}<input [name]="'question-' + $index" [(ngModel)]="question.prompt" placeholder="Nhập câu hỏi" /></label><label>Các đáp án (mỗi dòng một đáp án)<textarea [name]="'options-' + $index" rows="4" [ngModel]="questionOptionsText(question.options)" (ngModelChange)="setQuestionOptions($index, $event)"></textarea></label><label>Đáp án đúng<select [name]="'correct-' + $index" [(ngModel)]="question.correctAnswer">@for (option of question.options; track $index) { <option [ngValue]="$index">{{ $index + 1 }}. {{ option || 'Đáp án ' + ($index + 1) }}</option> }</select></label><button class="remove-question" type="button" (click)="removeQuestion($index)">Xóa câu hỏi</button></article> }
+        </div>
         }
         @if (form.kind === "schedule" || form.kind === "exam") {
         <label>{{ form.kind === "exam" ? "Phòng thi / địa điểm" : "Phòng / địa điểm" }}<input name="location"
@@ -127,8 +131,8 @@
     <div class="roster-list">
       @for (enrollment of enrollments(); track enrollment._id) {
       <article class="roster-row">
-        <div class="roster-person"><strong>{{ enrollmentStudentName(enrollment) }}</strong><small>{{
-            enrollment.courseId.courseCode }} · {{ enrollment.courseId.courseName }}</small></div>
+        <div class="roster-person"><strong>{{ enrollmentStudentName(enrollment) }}</strong><small>{{ enrollmentStudentEmail(enrollment) }}</small><small>{{
+            enrollment.courseId.courseCode }} · {{ enrollment.courseId.courseName }} · {{ enrollment.status === 'completed' ? 'Đã hoàn thành' : 'Đang học' }}</small></div>
         <label>Tiến độ (%)<input type="number" min="0" max="100"
             [ngModel]="progressDraft[enrollment._id]"
             (ngModelChange)="progressDraft[enrollment._id] = $event" /></label>
@@ -233,6 +237,7 @@
               <strong>{{ studentName(submission) }}</strong><small>{{
                 submission.submittedAt | date: "dd/MM/yyyy HH:mm"
                 }}</small>
+              @if (submission.score !== undefined) { <small class="graded-result">Kết quả: {{ submission.score }}/100 · {{ submission.feedback || 'Đã chấm' }}</small> }
               <p class="answer">{{ submission.answer }}</p>
             </div>
             <div class="grade-fields">

@@ -79,14 +79,14 @@ const createCourse = async (req, res) => {
             });
         }
 
-        let approvalStatus = req.user.role === 'admin' ? (courseDetails.approvalStatus || 'approved') : 'pending';
+        let approvalStatus = req.user.role === 'admin' ? (courseDetails.approvalStatus || 'approved') : (courseDetails.approvalStatus === 'draft' ? 'draft' : 'pending');
         if (req.user.role === 'teacher') {
             const identity = await teacherIdentity(req.user);
             if (!identity) return res.status(403).json({ message: 'Tài khoản teacher chưa được liên kết hồ sơ giảng viên đang hoạt động' });
             courseDetails.teacherId = identity.profile.teacherCode;
             courseDetails.teacherName = identity.profile.fullName;
             courseDetails.status = false;
-            approvalStatus = 'pending';
+            approvalStatus = courseDetails.approvalStatus === 'draft' ? 'draft' : 'pending';
         }
         const course = await courseModel.create({
             ...courseDetails,
@@ -120,7 +120,9 @@ const updateCourse = async (req, res) => {
         if (req.user.role === 'teacher') {
             const identity = await teacherIdentity(req.user);
             if (!identity || !identity.identifiers.includes(String(current.teacherId)) && !identity.identifiers.includes(String(current.teacherId).toLowerCase()) && !identity.identifiers.includes(String(current.teacherId).toUpperCase())) return res.status(403).json({ message: 'Bạn chỉ được chỉnh sửa khóa học của mình' });
-            delete updates.teacherId; delete updates.teacherName; delete updates.approvalStatus; delete updates.status;
+            delete updates.teacherId; delete updates.teacherName; delete updates.status;
+            updates.approvalStatus = updates.approvalStatus === 'draft' ? 'draft' : 'pending';
+            updates.status = false;
         }
         const course = await courseModel.findByIdAndUpdate(req.params.id, updates, {
             new: true,
@@ -172,4 +174,4 @@ const reviewCourse = async (req, res) => {
     }
 };
 
-module.exports = { getAllCourse, getCourseById, createCourse, updateCourse, deleteCourse, reviewCourse }
+module.exports = { getAllCourse, getCourseById, createCourse, updateCourse, deleteCourse, reviewCourse, teacherIdentity }

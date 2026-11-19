@@ -72,6 +72,10 @@ export class CourseComponent implements OnInit {
   pageSize = 5;
   total = 0;
   get isAdmin(): boolean { return this.authService.getUserRole() === 'admin'; }
+  get submitLabel(): string {
+    if (this.isAdmin) return this.status === 'CREATE' ? 'Lưu' : 'Cập nhật';
+    return this.form.get('approvalStatus')?.value === 'pending' ? 'Gửi admin duyệt' : 'Lưu bản nháp';
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -84,6 +88,9 @@ export class CourseComponent implements OnInit {
       courseCode: [''],
       courseName: ['', Validators.required],
       category: [''],
+      description: [''],
+      level: ['beginner'],
+      thumbnail: [''],
       teacherId: [null, Validators.required],
       teacherName: [null, Validators.required],
       duration: [null, Validators.required],
@@ -206,8 +213,24 @@ export class CourseComponent implements OnInit {
     this.form.patchValue({ status: true, approvalStatus: 'approved' });
     if (this.authService.getUserRole() === 'teacher') {
       const user = JSON.parse(localStorage.getItem('user') ?? '{}');
-      this.form.patchValue({ teacherId: user.id ?? user._id ?? user.userName, teacherName: user.userName, status: false, approvalStatus: 'pending' });
+      this.form.patchValue({ teacherId: user.id ?? user._id ?? user.userName, teacherName: user.userName, status: false, approvalStatus: 'draft' });
     }
+  }
+
+  uploadThumbnail(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.nzMessage.warning('Vui lòng chọn tệp hình ảnh.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.nzMessage.warning('Ảnh thumbnail tối đa 5 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => this.form.patchValue({ thumbnail: String(reader.result || '') });
+    reader.readAsDataURL(file);
   }
   cancelModalCourse() {
     this.isCourse = false;
@@ -343,6 +366,9 @@ export class CourseComponent implements OnInit {
             courseCode: courseData.courseCode,
             courseName: courseData.courseName,
             category: courseData.category,
+            description: courseData.description ?? '',
+            level: courseData.level ?? 'beginner',
+            thumbnail: courseData.thumbnail ?? '',
             teacherId: courseData.teacherId,
             teacherName: courseData.teacherName,
             duration: courseData.duration,

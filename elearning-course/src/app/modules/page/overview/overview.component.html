@@ -11,7 +11,7 @@
     </section>
     @if (data.totals.pendingCourses) { <a class="pending-banner" routerLink="/admin/courses">Có {{ data.totals.pendingCourses }} khóa học đang chờ duyệt · Xem ngay →</a> }
     <section class="dashboard-grid">
-      <article class="panel student-chart"><div class="panel-heading"><div><h2>Thống kê học viên</h2><p>Số tài khoản học viên tạo mới trong 6 tháng</p></div></div>
+      <article class="panel student-chart"><div class="panel-heading"><div><h2>Thống kê học viên</h2><p>Số hồ sơ học viên tạo mới trong 6 tháng</p></div></div>
         <div class="chart" role="img" aria-label="Biểu đồ số học viên mới theo tháng">
           @for (month of data.studentTrend; track month.year + '-' + month.month) {
             <div class="chart-column"><strong>{{ month.count }}</strong><div class="bar-track"><span [style.height.%]="barHeight(month.count)"></span></div><small>{{ month.label }}</small></div>

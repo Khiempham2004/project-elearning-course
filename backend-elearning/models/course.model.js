@@ -17,6 +17,10 @@ const courseSchema = new mongoose.Schema(
             type: String
         },
 
+        description: { type: String, default: '' },
+        level: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
+        thumbnail: { type: String, default: '' },
+
         teacherId: {
             type: String,
             required: true,
@@ -52,7 +56,7 @@ const courseSchema = new mongoose.Schema(
         },
         approvalStatus: {
             type: String,
-            enum: ['pending', 'approved', 'rejected'],
+            enum: ['draft', 'pending', 'approved', 'rejected'],
             default: 'approved',
         }
     },

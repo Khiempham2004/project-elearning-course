@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Enrollment = require("../models/enrollment.model.js");
 const LearningActivity = require("../models/learningActivity.model.js");
+const Lesson = require('../models/lesson.model.js');
 const { courseModel } = require("../models/course.model.js");
 const { findTeacherProfile } = require("../utils/teacherProfileLookup.js");
 
@@ -130,11 +131,11 @@ const getMyLearning = async (req, res) => {
             .lean();
         const studentId = String(req.user._id);
         const resultActivities = activities.map(
-            ({ submissions = [], ...activity }) => {
+            ({ submissions = [], questions = [], ...activity }) => {
                 const mine = submissions.find(
                     (submission) => String(submission.studentId) === studentId,
                 );
-                return { ...activity, submission: mine || null };
+                return { ...activity, questions: questions.map(({ prompt, options }) => ({ prompt, options })), submission: mine || null };
             },
         );
         return res.json({
@@ -166,13 +167,24 @@ const getManageActivities = async (req, res) => {
         }
         const courses = await courseModel.find(courseFilter).select('courseName courseCode teacherName teacherId').sort({ courseName: 1 }).lean();
         const courseIds = courses.map((course) => course._id);
-        const [activities, enrollmentCounts, enrollments] = await Promise.all([
+        const [activities, enrollmentCounts, enrollments, lessonCount] = await Promise.all([
             LearningActivity.find({ courseId: { $in: courseIds } }).populate('courseId', 'courseName courseCode').populate('submissions.studentId', 'userName email').sort({ startsAt: 1, dueAt: 1, createdAt: -1 }).lean(),
             Enrollment.aggregate([{ $match: { courseId: { $in: courseIds }, status: { $in: ['active', 'completed'] } } }, { $group: { _id: '$courseId', count: { $sum: 1 } } }]),
             Enrollment.find({ courseId: { $in: courseIds }, status: { $in: ['active', 'completed'] } }).populate('studentId', 'userName email').populate('courseId', 'courseName courseCode').sort({ enrolledAt: -1 }).lean(),
+            Lesson.countDocuments({ courseId: { $in: courseIds } }),
         ]);
         const counts = new Map(enrollmentCounts.map((entry) => [String(entry._id), entry.count]));
-        return res.json({ data: { teacher, activities, enrollments, courses: courses.map((course) => ({ ...course, enrolledCount: counts.get(String(course._id)) ?? 0 })) } });
+        const students = new Set(enrollments.map((entry) => String(entry.studentId?._id ?? entry.studentId)).filter(Boolean));
+        const stats = {
+            courseCount: courses.length,
+            approvedCourseCount: courses.filter((course) => course.approvalStatus === 'approved' || (!course.approvalStatus && course.status === true)).length,
+            studentCount: students.size,
+            lessonCount,
+            scheduleCount: activities.filter((item) => item.kind === 'schedule').length,
+            assignmentCount: activities.filter((item) => item.kind === 'assignment').length,
+            quizCount: activities.filter((item) => item.kind === 'exam').length,
+        };
+        return res.json({ data: { teacher, stats, activities, enrollments, courses: courses.map((course) => ({ ...course, enrolledCount: counts.get(String(course._id)) ?? 0 })) } });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Không thể tải danh sách hoạt động' });
@@ -186,13 +198,14 @@ const updateActivity = async (req, res) => {
         const activity = await LearningActivity.findById(activityId);
         if (!activity) return res.status(404).json({ message: 'Không tìm thấy hoạt động học tập' });
         if (!(await canManageActivity(req, activity))) return res.status(403).json({ message: 'Bạn chỉ được quản lý hoạt động thuộc khóa học của mình' });
-        const allowed = ['courseId', 'kind', 'title', 'description', 'startsAt', 'dueAt', 'durationMinutes', 'location', 'meetingUrl', 'status'];
+        const allowed = ['courseId', 'kind', 'title', 'description', 'startsAt', 'dueAt', 'durationMinutes', 'passingScore', 'questions', 'location', 'meetingUrl', 'status'];
         for (const key of allowed) if (req.body?.[key] !== undefined) activity[key] = req.body[key];
         if (!(await canManageActivity(req, activity))) return res.status(403).json({ message: 'Bạn chỉ được chuyển hoạt động vào khóa học của mình' });
         if (typeof activity.title !== 'string' || !activity.title.trim() || !['schedule', 'assignment', 'exam'].includes(activity.kind)) return res.status(400).json({ message: 'Tiêu đề hoặc loại hoạt động không hợp lệ' });
         if (!(await courseModel.exists({ _id: activity.courseId }))) return res.status(404).json({ message: 'Không tìm thấy khóa học' });
         if (activity.kind === 'schedule' && !String(activity.location || '').trim() && !String(activity.meetingUrl || '').trim()) return res.status(400).json({ message: 'Lịch học cần có phòng học hoặc liên kết lớp để học viên tham gia' });
-        if (activity.kind === 'exam' && (!activity.startsAt || (!activity.dueAt && !activity.durationMinutes) || (!String(activity.location || '').trim() && !String(activity.meetingUrl || '').trim()))) return res.status(400).json({ message: 'Bài kiểm tra cần giờ bắt đầu, thời lượng hoặc hạn kết thúc, và phòng thi hoặc liên kết trực tuyến' });
+        if (activity.kind === 'exam' && (!activity.startsAt || (!activity.dueAt && !activity.durationMinutes) || (!activity.questions?.length && !String(activity.location || '').trim() && !String(activity.meetingUrl || '').trim()))) return res.status(400).json({ message: 'Bài kiểm tra cần giờ bắt đầu, thời lượng hoặc hạn kết thúc; bài thi tự luận cần phòng thi hoặc liên kết trực tuyến' });
+        if (activity.kind === 'exam' && activity.questions?.length && activity.questions.some((question) => !String(question.prompt || '').trim() || !Array.isArray(question.options) || question.options.length < 2 || question.options.some((option) => !String(option).trim()) || !Number.isInteger(Number(question.correctAnswer)) || Number(question.correctAnswer) < 0 || Number(question.correctAnswer) >= question.options.length)) return res.status(400).json({ message: 'Mỗi câu trắc nghiệm cần nội dung, ít nhất 2 đáp án và đáp án đúng hợp lệ' });
         if (activity.startsAt && activity.dueAt && new Date(activity.dueAt) < new Date(activity.startsAt)) return res.status(400).json({ message: 'Hạn hoàn thành không được trước thời gian bắt đầu' });
         await activity.save();
         return res.json({ data: activity, message: 'Đã cập nhật hoạt động học tập' });
@@ -265,6 +278,15 @@ const submitActivity = async (req, res) => {
                             ? "Đã hết thời gian làm bài kiểm tra"
                             : "Đã quá hạn nộp bài",
                 });
+        let autoGrade = null;
+        if (activity.kind === 'exam' && activity.questions?.length) {
+            let selected;
+            try { selected = JSON.parse(answer); } catch { return res.status(400).json({ message: 'Đáp án bài trắc nghiệm không hợp lệ' }); }
+            if (!selected || typeof selected !== 'object' || Array.isArray(selected)) return res.status(400).json({ message: 'Đáp án bài trắc nghiệm không hợp lệ' });
+            const correct = activity.questions.reduce((count, question, index) => count + (Number(selected[index]) === question.correctAnswer ? 1 : 0), 0);
+            const score = Math.round(correct / activity.questions.length * 100);
+            autoGrade = { score, feedback: score >= activity.passingScore ? 'Đạt điểm yêu cầu' : 'Chưa đạt điểm yêu cầu' };
+        }
         const submission = activity.submissions.find(
             (item) => String(item.studentId) === String(req.user._id),
         );
@@ -272,11 +294,13 @@ const submitActivity = async (req, res) => {
             if (submission.score !== undefined && submission.score !== null) return res.status(409).json({ message: 'Bài nộp đã được chấm điểm và không thể chỉnh sửa' });
             submission.answer = answer;
             submission.submittedAt = new Date();
+            if (autoGrade) { submission.score = autoGrade.score; submission.feedback = autoGrade.feedback; }
         } else {
             activity.submissions.push({
                 studentId: req.user._id,
                 answer,
                 submittedAt: new Date(),
+                ...(autoGrade || {}),
             });
         }
         await activity.save();
@@ -303,6 +327,8 @@ const createActivity = async (req, res) => {
             startsAt,
             dueAt,
             durationMinutes,
+            passingScore,
+            questions,
             location,
             meetingUrl,
             status,
@@ -326,7 +352,8 @@ const createActivity = async (req, res) => {
             if (!scope.courseIds.some((id) => String(id) === String(courseId))) return res.status(403).json({ message: 'Bạn chỉ được tạo hoạt động cho khóa học được phân công' });
         }
         if (kind === 'schedule' && !String(location || '').trim() && !String(meetingUrl || '').trim()) return res.status(400).json({ message: 'Lịch học cần có phòng học hoặc liên kết lớp để học viên tham gia' });
-        if (kind === 'exam' && (!startsAt || (!dueAt && !durationMinutes) || (!String(location || '').trim() && !String(meetingUrl || '').trim()))) return res.status(400).json({ message: 'Bài kiểm tra cần giờ bắt đầu, thời lượng hoặc hạn kết thúc, và phòng thi hoặc liên kết trực tuyến' });
+        if (kind === 'exam' && (!startsAt || (!dueAt && !durationMinutes) || (!questions?.length && !String(location || '').trim() && !String(meetingUrl || '').trim()))) return res.status(400).json({ message: 'Bài kiểm tra cần giờ bắt đầu, thời lượng hoặc hạn kết thúc; bài thi tự luận cần phòng thi hoặc liên kết trực tuyến' });
+        if (kind === 'exam' && questions?.length && questions.some((question) => !String(question.prompt || '').trim() || !Array.isArray(question.options) || question.options.length < 2 || question.options.some((option) => !String(option).trim()) || !Number.isInteger(Number(question.correctAnswer)) || Number(question.correctAnswer) < 0 || Number(question.correctAnswer) >= question.options.length)) return res.status(400).json({ message: 'Mỗi câu trắc nghiệm cần nội dung, ít nhất 2 đáp án và đáp án đúng hợp lệ' });
         if (startsAt && dueAt && new Date(dueAt) < new Date(startsAt)) return res.status(400).json({ message: 'Hạn hoàn thành không được trước thời gian bắt đầu' });
         const activity = await LearningActivity.create({
             courseId,
@@ -336,6 +363,8 @@ const createActivity = async (req, res) => {
             startsAt,
             dueAt,
             durationMinutes,
+            passingScore: Number(passingScore ?? 60),
+            questions: kind === 'exam' ? questions ?? [] : [],
             location,
             meetingUrl,
             status,

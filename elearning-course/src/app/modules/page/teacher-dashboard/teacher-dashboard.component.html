@@ -16,15 +16,19 @@
   @if (!loading() && !error()) {
   <section class="stats">
     <article>
-      <span>Khóa học</span><strong>{{ courseCount() }}</strong><small>Khóa có thể quản lý</small>
+      <span>Khóa học</span><strong>{{ courseCount() }}</strong><small>Khóa học của bạn</small>
     </article>
     <article>
-      <span>Buổi học</span><strong>{{ count("schedule") }}</strong><small>Lịch học đã tạo</small>
+      <span>Đã duyệt</span><strong>{{ approvedCourseCount() }}</strong><small>Khóa học được mở</small>
     </article>
     <article>
-      <span>Bài tập & kiểm tra</span><strong>{{ count("assignment") + count("exam") }}</strong><small>{{
-        count("assignment") }} bài tập · {{ count("exam") }} bài kiểm
-        tra</small>
+      <span>Học viên</span><strong>{{ studentCount() }}</strong><small>Đã đăng ký khóa của bạn</small>
+    </article>
+    <article>
+      <span>Bài giảng</span><strong>{{ lessonCount() }}</strong><small>Trong các khóa học của bạn</small>
+    </article>
+    <article>
+      <span>Hoạt động học tập</span><strong>{{ activities().length }}</strong><small>{{ count("schedule") }} buổi · {{ count("assignment") }} bài tập · {{ count("exam") }} bài kiểm tra</small>
     </article>
     <article>
       <span>Bài chờ chấm</span><strong>{{ pendingSubmissions }}</strong><small>Bài học viên đã nộp</small>
@@ -41,6 +45,7 @@
       <p class="eyebrow">CÔNG CỤ GIẢNG DẠY</p>
       <h2>Bắt đầu công việc</h2>
     </div>
+    <a routerLink="/teacher/lessons">＋ Quản lý bài giảng</a>
     <a routerLink="/teacher/learning-activities">＋ Tạo lịch, bài tập hoặc kiểm tra</a>
   </section>
   <section class="latest">

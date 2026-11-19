@@ -16,6 +16,7 @@ import {
 export class ExamsElearningComponent implements OnInit {
   readonly items = signal<LearningActivity[]>([]);
   readonly answers: Record<string, string> = {};
+  readonly quizAnswers: Record<string, Record<number, number>> = {};
   readonly loading = signal(true);
   readonly submitting = signal('');
   readonly message = signal('');
@@ -41,6 +42,10 @@ export class ExamsElearningComponent implements OnInit {
               ),
             ),
         );
+        for (const item of this.items()) {
+          if (!item.submission?.answer || !item.questions?.length) continue;
+          try { this.quizAnswers[item._id] = JSON.parse(item.submission.answer); } catch { /* Keep quiz unanswered if an older answer was free text. */ }
+        }
         this.loading.set(false);
       },
       error: (error) => {
@@ -51,6 +56,9 @@ export class ExamsElearningComponent implements OnInit {
   }
   setAnswer(id: string, event: Event): void {
     this.answers[id] = (event.target as HTMLTextAreaElement).value;
+  }
+  selectQuizAnswer(id: string, questionIndex: number, optionIndex: number): void {
+    this.quizAnswers[id] = { ...(this.quizAnswers[id] ?? {}), [questionIndex]: optionIndex };
   }
   opensAt(item: LearningActivity): number | null {
     return item.startsAt ? new Date(item.startsAt).getTime() : null;
@@ -83,7 +91,7 @@ export class ExamsElearningComponent implements OnInit {
     this.error.set('');
     this.submitting.set(item._id);
     this.learningService
-      .submit(item._id, this.answers[item._id] || item.submission?.answer || '')
+      .submit(item._id, item.questions?.length ? JSON.stringify(this.quizAnswers[item._id] ?? {}) : this.answers[item._id] || item.submission?.answer || '')
       .subscribe({
         next: ({ message }) => {
           this.message.set(message);

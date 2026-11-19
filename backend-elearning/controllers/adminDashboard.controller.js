@@ -1,4 +1,5 @@
 const Auth = require('../models/auth.model.js');
+const StudentModel = require('../models/student.model.js');
 const Enrollment = require('../models/enrollment.model.js');
 const { courseModel } = require('../models/course.model.js');
 
@@ -7,12 +8,12 @@ const getDashboard = async (_req, res) => {
         const now = new Date();
         const firstMonth = new Date(now.getFullYear(), now.getMonth() - 5, 1);
         const [studentCount, teacherCount, courseCount, enrollmentCount, monthlyStudents, latestCourses, enrollmentStatuses, pendingCourses] = await Promise.all([
-            Auth.countDocuments({ role: 'student' }),
+            StudentModel.countDocuments(),
             Auth.countDocuments({ role: 'teacher' }),
             courseModel.countDocuments(),
             Enrollment.countDocuments(),
-            Auth.aggregate([
-                { $match: { role: 'student', createdAt: { $gte: firstMonth } } },
+            StudentModel.aggregate([
+                { $match: { createdAt: { $gte: firstMonth } } },
                 { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
             ]),
             courseModel.find().sort({ createdAt: -1 }).limit(6).select('courseCode courseName teacherName createdAt status approvalStatus').lean(),

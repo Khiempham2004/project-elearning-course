@@ -60,6 +60,9 @@ export class ExamsElearningComponent implements OnInit {
   selectQuizAnswer(id: string, questionIndex: number, optionIndex: number): void {
     this.quizAnswers[id] = { ...(this.quizAnswers[id] ?? {}), [questionIndex]: optionIndex };
   }
+  selectedAnswer(item: LearningActivity, questionIndex: number): number | null {
+    try { const saved = item.submission?.answer ? JSON.parse(item.submission.answer) : null; return saved?.[questionIndex] ?? null; } catch { return null; }
+  }
   opensAt(item: LearningActivity): number | null {
     return item.startsAt ? new Date(item.startsAt).getTime() : null;
   }

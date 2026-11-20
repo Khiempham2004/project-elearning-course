@@ -22,7 +22,19 @@ const listUsers = async (req, res) => {
             Auth.find(filter).select('-password').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
             Auth.countDocuments(filter),
         ]);
-        return res.json({ data: users, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+        const totalPages = Math.ceil(total / limit);
+
+        return res.json({
+            result : {
+                data: users, 
+                pagination: { 
+                    page, 
+                    limit, 
+                    total,
+                    totalPages
+                }
+            }
+        });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Không tải được danh sách tài khoản' });

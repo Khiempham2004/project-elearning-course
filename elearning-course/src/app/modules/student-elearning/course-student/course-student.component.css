@@ -1,12 +1,20 @@
 :host {
     display: block;
     color: #1d3045;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
 }
 
 .courses-page {
     display: grid;
     gap: 25px;
 }
+
+.catalog-filters { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+.catalog-filters button,.catalog-filters select { border:1px solid #dce4ee; border-radius:8px; background:#fff; color:#44556b; padding:9px 12px; font:inherit; }
+.catalog-filters button { cursor:pointer; }
+.catalog-filters button.active { border-color:#2b62c8; background:#edf4ff; color:#2456c5; }
+.catalog-filters label { display:flex; align-items:center; gap:7px; color:#667085; font-size:13px; }
 
 
 
@@ -512,7 +520,7 @@
     align-items: center;
     gap: 5px;
     color: #368064;
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 650;
 }
 
@@ -532,18 +540,18 @@
 }
 
 .course-body h3 {
-    min-height: 38px;
+    min-height: 42px;
     margin: 8px 0 5px;
     color: #213f59;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.5;
 }
 
 .course-description {
-    min-height: 31px;
+    min-height: 38px;
     margin: 0;
     color: #82919b;
-    font-size: 9px;
+    font-size: 13px;
     line-height: 1.55;
 }
 
@@ -555,14 +563,14 @@
 }
 
 .teacher-avatar {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     display: grid;
     place-items: center;
     border-radius: 50%;
     background: #edf2f5;
     color: #46647b;
-    font-size: 10px;
+    font-size: 13px;
     font-weight: 700;
 }
 
@@ -573,13 +581,13 @@
 
 .instructor-row small {
     color: #98a5ae;
-    font-size: 8px;
+    font-size: 12px;
 }
 
 .instructor-row strong {
     margin-top: 2px;
     color: #526b7c;
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 600;
 }
 
@@ -590,20 +598,26 @@
     padding: 9px 0;
     border-top: 1px solid #edf1f3;
     color: #82919b;
-    font-size: 8px;
+    font-size: 13px;
 }
+
+.course-meta.price-row { align-items:center; font-size:13px; }
+.course-meta.price-row strong { color:#213f59; font-size:15px; font-weight:700; }
+
+.course-learning-link { font-size:16px; }
+.course-body button { font-family:Arial,Helvetica,sans-serif; font-size:14px; }
 
 .progress-heading {
     display: flex;
     justify-content: space-between;
     margin: 2px 0 6px;
     color: #82919b;
-    font-size: 9px;
+    font-size: 13px;
 }
 
 .progress-heading strong {
     color: #317d78;
-    font-size: 9px;
+    font-size: 12px;
 }
 
 .progress-track {

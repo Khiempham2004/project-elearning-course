@@ -1,3 +1,56 @@
+:host {
+    display: block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    color: #222;
+}
+
+::ng-deep .header-course th,
+::ng-deep .header-course td,
+::ng-deep .header-course button,
+::ng-deep .header-course input,
+::ng-deep .header-course .ant-pagination,
+::ng-deep .header-course .ant-select { font-family: Arial, Helvetica, sans-serif !important; font-size: 15px !important; }
+
+/* Keep edit/delete and approval controls inside the 150px action column. */
+::ng-deep .header-course .table-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-items: center;
+    align-items: center;
+    gap: 5px !important;
+    width: 100%;
+}
+
+::ng-deep .header-course .table-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    min-width: 0;
+    height: 30px !important;
+    padding: 0 5px;
+    font-size: 12px !important;
+    white-space: nowrap;
+}
+
+::ng-deep .ant-modal,
+::ng-deep .ant-modal-content,
+::ng-deep .ant-modal-content input,
+::ng-deep .ant-modal-content textarea,
+::ng-deep .ant-modal-content .ant-select,
+::ng-deep .ant-modal-content .ant-picker,
+::ng-deep .ant-modal-content button {
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 15px;
+}
+
+.course-detail-lessons { margin-top: 10px; padding: 14px; border: 1px solid #e7ecf2; border-radius: 10px; }
+.course-detail-lessons h3 { margin: 0 0 10px; font-size: 18px; }
+.course-detail-lessons article { display: grid; grid-template-columns: minmax(110px, .6fr) 2fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-bottom: 1px solid #edf0f4; font-size: 15px; }
+.course-detail-lessons article:last-of-type { border-bottom: 0; }
+.course-detail-lessons small { color: #667085; font-size: 13px; }
+
 ::host {
     ::ng-deep .ant-modal-content {
         border-radius: 16px !important;

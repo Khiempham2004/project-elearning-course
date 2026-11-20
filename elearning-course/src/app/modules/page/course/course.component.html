@@ -31,8 +31,8 @@
       <div nz-row [nzGutter]="[24, 8]">
         <div nz-col [nzSpan]="12">
           <nz-form-item>
-            <nz-form-label>Mã khóa học</nz-form-label>
-            <nz-form-control>
+            <nz-form-label nzRequired>Mã khóa học</nz-form-label>
+            <nz-form-control nzErrorTip="Mã khóa học là bắt buộc">
               <input nz-input formControlName="courseCode" placeholder="Nhập mã khóa học" />
             </nz-form-control>
           </nz-form-item>
@@ -169,6 +169,14 @@
           </div>
         } @else {
           <div nz-col [nzSpan]="12"><nz-form-item><nz-form-label>Trạng thái khóa học</nz-form-label><nz-form-control><nz-select class="w-100" formControlName="approvalStatus"><nz-option nzValue="draft" nzLabel="Bản nháp"/><nz-option nzValue="pending" nzLabel="Gửi admin duyệt"/></nz-select></nz-form-control></nz-form-item></div>
+        }
+        @if (status === 'DETAIL') {
+          <div nz-col [nzSpan]="24" class="course-detail-lessons">
+            <h3>Chương và bài giảng</h3>
+            @for (lesson of detailLessons; track lesson._id) {
+              <article><strong>{{ lesson.section || 'Chương học' }}</strong><span>{{ lesson.title }}</span><small>{{ lesson.contentType === 'video' ? 'Video' : lesson.contentType === 'pdf' ? 'Tài liệu PDF' : 'Nội dung bài học' }}</small></article>
+            } @empty { <p>Khóa học chưa có bài giảng.</p> }
+          </div>
         }
       </div>
 

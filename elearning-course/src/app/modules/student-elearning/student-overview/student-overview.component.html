@@ -13,7 +13,8 @@
   @if (error()) { <p role="alert">{{ error() }}</p> }
   @if (!loading() && !error()) {
     <section class="stats-grid">
-      <div class="stat-card"><span class="stat-title">Khóa học đang tham gia</span><h2>{{ courses.length }}</h2><span class="stat-description">Các lớp đã đăng ký</span></div>
+      <div class="stat-card"><span class="stat-title">Tổng khóa học đã đăng ký</span><h2>{{ courses.length }}</h2><span class="stat-description">Bao gồm khóa đang học và hoàn thành</span></div>
+      <div class="stat-card"><span class="stat-title">Khóa học đang học</span><h2>{{ inProgressCount }}</h2><span class="stat-description">Sẵn sàng để tiếp tục</span></div>
       <div class="stat-card"><span class="stat-title">Bài tập chưa nộp</span><h2>{{ pendingCount }}</h2><span class="stat-description">Còn trong danh sách bài tập</span></div>
       <div class="stat-card"><span class="stat-title">Khóa học hoàn thành</span><h2>{{ completedCount }}</h2><span class="stat-description">Các khóa đã hoàn tất</span></div>
       <div class="stat-card"><span class="stat-title">Tiến độ trung bình</span><h2>{{ averageProgress }}%</h2><span class="stat-description">Theo tiến độ lớp học</span></div>
@@ -23,7 +24,7 @@
       <div class="section-header"><div><h2>Khóa học của tôi</h2><p>Tiến độ học tập theo từng khóa</p></div><a class="view-all" routerLink="/student/courses">Xem danh sách →</a></div>
       <div class="course-grid">
         @for (item of courses; track item._id) {
-          <article class="course-card"><div class="course-body"><h4>{{ item.courseId.courseName }}</h4><p class="instructor">{{ item.courseId.courseCode }} · Giảng viên: {{ item.courseId.teacherName || 'Chưa cập nhật' }}</p><div class="progress-header"><span>Tiến độ</span><strong>{{ item.progress }}%</strong></div><div class="progress-track"><div class="progress-bar" [style.width.%]="item.progress"></div></div><a class="continue-button" routerLink="/student/progress">Xem kết quả →</a></div></article>
+          <article class="course-card"><div class="course-body"><h4>{{ item.courseId.courseName }}</h4><p class="instructor">{{ item.courseId.courseCode }} · Giảng viên: {{ item.courseId.teacherName || 'Chưa cập nhật' }}</p><div class="progress-header"><span>Tiến độ</span><strong>{{ item.progress }}%</strong></div><div class="progress-track"><div class="progress-bar" [style.width.%]="item.progress"></div></div><a class="continue-button" [routerLink]="['/student/learn', item.courseId._id]">{{ item.progress ? 'Tiếp tục học →' : 'Bắt đầu học →' }}</a></div></article>
         } @empty { <p>Bạn chưa đăng ký khóa học nào. <a routerLink="/student/courses">Xem khóa học đang tuyển sinh</a>.</p> }
       </div>
     </section>

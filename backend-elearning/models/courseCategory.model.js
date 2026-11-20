@@ -6,4 +6,6 @@ const courseCategorySchema = new mongoose.Schema({
     status: { type: Boolean, default: true },
 }, { timestamps: true });
 
+courseCategorySchema.index({ status: 1, name: 1 });
+
 module.exports = mongoose.model('CourseCategory', courseCategorySchema);

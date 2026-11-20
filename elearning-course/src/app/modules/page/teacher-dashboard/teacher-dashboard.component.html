@@ -12,6 +12,9 @@
   }
   @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
+  @if (error().toLowerCase().includes('hồ sơ giảng viên')) {
+    <div class="assignment-note">Teacher chưa liên kết hồ sơ hoạt động. Nhờ admin vào <strong>Quản lý giảng viên</strong>, tạo/cập nhật hồ sơ có email trùng email đăng nhập hoặc teacherCode trùng tên đăng nhập / ID tài khoản, bật trạng thái hoạt động rồi tải lại trang.</div>
+  }
   }
   @if (!loading() && !error()) {
   <section class="stats">

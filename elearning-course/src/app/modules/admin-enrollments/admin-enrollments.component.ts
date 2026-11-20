@@ -47,14 +47,20 @@ export class AdminEnrollmentsComponent implements OnInit {
         this.status,
       )
       .subscribe({
-        next: (response) => {
-          const items = response.data ?? [];
+        next: (res) => {
+          // API list response is wrapped as { result: { data, pagination } }.
+          const payload = res?.result;
+          const items = payload?.data ?? [];
           this.items.set(items);
           for (const item of items) {
             this.progressDraft[item._id] = item.progress;
             this.lessonsDraft[item._id] = item.completedLessons;
           }
-          this.total.set(response.pagination?.total ?? 0);
+          this.total.set(payload?.pagination?.total ?? items.length);
+          if (payload?.pagination?.page) {
+            this.page.set(payload.pagination.page);
+          }
+          this.error.set('');
           this.loading.set(false);
         },
         error: (error) => {

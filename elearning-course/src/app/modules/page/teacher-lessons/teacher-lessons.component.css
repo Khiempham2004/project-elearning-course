@@ -27,6 +27,16 @@
   color: #e2edf7;
 }
 
+.publishing-steps { display:flex; flex-wrap:wrap; gap:9px; margin-top:16px; }
+.publishing-steps strong { flex-basis:100%; color:#fff; font-size:14px; }
+.publishing-steps span { padding:7px 10px; border:1px solid #ffffff35; border-radius:8px; background:#ffffff12; color:#eef6ff; font-size:12px; }
+.profile-help { margin:-8px 0 18px; padding:14px 16px; border:1px solid #f2d18a; border-radius:9px; background:#fffaeb; color:#7a4f01; line-height:1.65; }
+.approval-note { padding:12px 14px; border-radius:8px; background:#eff6ff; color:#1d4f91; line-height:1.6; }
+.empty-course { margin:20px 0; padding:24px; border:1px dashed #b8c8dc; border-radius:12px; background:#fff; color:#344054; }
+.empty-course p { margin:8px 0 14px; color:#667085; }
+.empty-course a { display:inline-block; padding:9px 13px; border-radius:8px; background:#2563eb; color:#fff; text-decoration:none; }
+.form-grid label small { color:#667085; font-size:12px; font-weight:400; line-height:1.5; }
+
 .eyebrow {
   font-size: 11px;
   font-weight: 800;

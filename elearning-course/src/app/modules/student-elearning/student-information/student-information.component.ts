@@ -14,6 +14,7 @@ export class StudentInformationComponent implements OnInit {
   readonly saving = signal(false);
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
+  readonly avatarUrl = signal('');
 
   readonly form: FormGroup;
 
@@ -39,6 +40,7 @@ export class StudentInformationComponent implements OnInit {
           return;
         }
         this.form.patchValue({ userName: user.userName ?? '', email: user.email ?? '' });
+        this.avatarUrl.set(user.avatarUrl ?? '');
         localStorage.setItem('user', JSON.stringify(user));
         this.loading.set(false);
       },
@@ -69,12 +71,16 @@ export class StudentInformationComponent implements OnInit {
     const payload = {
       userName: this.form.controls['userName'].value!.trim(),
       email: this.form.controls['email'].value!.trim(),
+      avatarUrl: this.avatarUrl(),
       ...(newPassword ? { currentPassword, newPassword } : {}),
     };
     this.authService.updateProfile(payload).subscribe({
       next: (response) => {
         const updatedUser = response?.user ?? response?.data?.user;
-        if (updatedUser) localStorage.setItem('user', JSON.stringify(updatedUser));
+        if (updatedUser) {
+          this.avatarUrl.set(updatedUser.avatarUrl ?? this.avatarUrl());
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
         this.form.patchValue({ currentPassword: '', newPassword: '' });
         this.successMessage.set(response?.message ?? 'Đã cập nhật thông tin cá nhân.');
         this.saving.set(false);
@@ -84,5 +90,18 @@ export class StudentInformationComponent implements OnInit {
         this.saving.set(false);
       },
     });
+  }
+
+  onAvatarSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/') || file.size > 4_000_000) {
+      this.errorMessage.set('Chọn tệp ảnh hợp lệ có dung lượng tối đa 4 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => this.avatarUrl.set(String(reader.result ?? ''));
+    reader.onerror = () => this.errorMessage.set('Không đọc được ảnh đại diện.');
+    reader.readAsDataURL(file);
   }
 }

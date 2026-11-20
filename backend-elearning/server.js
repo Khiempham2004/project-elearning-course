@@ -19,6 +19,10 @@ const configurationManagementRoutes = require('./routes/configurationManagement.
 const systemLogManagementRoutes = require('./routes/systemLogManagement.routes.js');
 const notificationManagementRoutes = require('./routes/notificationManagement.routes.js');
 const adminRoutes = require('./routes/admin.routes.js');
+const restApiRoutes = require('./routes/restApi.routes.js');
+const resourceRoutes = require('./routes/resource.routes.js');
+const { errorHandler } = require('./middleware/error.middleware.js');
+const { standardizeResponse } = require('./middleware/response.middleware.js');
 const { verifyToken, authorize } = require('./middleware/auth.middleware.js');
 
 dotenv.config();
@@ -29,6 +33,7 @@ connectDB();
 app.use(cors());
 app.use(express.json({ limit: '8mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(standardizeResponse);
 
 app.use('/api/course', verifyToken, authorize('admin', 'course', 'teacher'), routerCourse);
 app.use('/api/student', verifyToken, authorize('admin'), routerStudent);
@@ -37,6 +42,8 @@ app.use('/api/student-learning', studentLearningRoutes);
 app.use('/api/teacher', verifyToken, authorize('admin'), routerTeacher);
 
 app.use('/api/auth', routes);
+app.use('/api', restApiRoutes);
+app.use('/api', resourceRoutes);
 app.use('/api/admin', verifyToken, authorize('admin'), adminRoutes);
 const authAccess = [verifyToken, authorize('admin','directory')];
 app.use('/api/province', ...authAccess, routerProvince);
@@ -57,6 +64,9 @@ app.get('/', (req, res) => {
         message: "Backend nodejs server run!",
     })
 })
+
+app.use((req, res) => res.status(404).json({ success: false, message: 'Không tìm thấy API' }));
+app.use(errorHandler);
 
 app.listen(PORT, () => {
     console.log(`Server running elearning ${PORT}`);

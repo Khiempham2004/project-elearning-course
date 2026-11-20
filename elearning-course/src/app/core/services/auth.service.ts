@@ -24,6 +24,7 @@ export class AuthService {
   updateProfile(params: {
     userName: string;
     email: string;
+    avatarUrl?: string;
     currentPassword?: string;
     newPassword?: string;
   }): Observable<any> {

@@ -7,6 +7,7 @@ const teacherSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'Auth', default: undefined },
 
     fullName: {
       type: String,
@@ -69,6 +70,8 @@ const teacherSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+teacherSchema.index({ userId: 1 }, { unique: true, sparse: true });
 
 const TeacherModel = mongoose.model('Teacher', teacherSchema);
 

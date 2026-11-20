@@ -87,6 +87,11 @@ export class StudentLayoutsComponent {
     catch { return 'Học viên'; }
   }
 
+  get studentAvatar(): string {
+    try { return JSON.parse(localStorage.getItem('user') ?? '{}').avatarUrl ?? ''; }
+    catch { return ''; }
+  }
+
   private get storageKey(): string {
     let identity = 'student';
     try {

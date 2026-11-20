@@ -197,6 +197,22 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'courses/:courseId',
+        data: { breadcrumb: 'Chi tiết khóa học' },
+        loadComponent: () =>
+          import('./modules/student-elearning/course-detail/course-detail.component').then(
+            (m) => m.CourseDetailComponent,
+          ),
+      },
+      {
+        path: 'learn/:courseId',
+        data: { breadcrumb: 'Không gian bài học' },
+        loadComponent: () =>
+          import('./modules/student-elearning/learning-workspace/learning-workspace.component').then(
+            (m) => m.LearningWorkspaceComponent,
+          ),
+      },
+      {
         path: 'schedule',
         data: { breadcrumb: 'Quản lý lịch học' },
         loadComponent: () =>

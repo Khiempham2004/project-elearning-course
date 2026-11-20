@@ -51,8 +51,14 @@ export class AdminUsersComponent implements OnInit {
       )
       .subscribe({
         next: (response) => {
-          this.users.set(response.data ?? []);
-          this.total.set(response.pagination?.total ?? 0);
+          const payload = response?.result ?? [];
+          const items = payload?.data;
+          this.users.set(items ?? []);
+          this.total.set(payload?.pagination?.total ?? items.length);
+          if (payload?.pagination?.page) {
+            this.page.set(payload.pagination?.page);
+          }
+          this.error.set('');
           this.loading.set(false);
         },
         error: (error) => {

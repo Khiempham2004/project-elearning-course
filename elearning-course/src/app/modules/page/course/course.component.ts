@@ -18,7 +18,6 @@ import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { CorusesService } from '../../../core/services/coruses.service';
-import { finalize } from 'rxjs';
 import {
   NzPaginationComponent,
   NzPaginationModule,
@@ -58,6 +57,7 @@ export class CourseComponent implements OnInit {
   tableColumn: DataTableColumn<any>[] = [];
   form: FormGroup;
   courses: any[] = [];
+  detailLessons: any[] = [];
   categoryNames: string[] = [];
   listOfCourse: any[] = [];
   searchKeyword: any = [];
@@ -71,10 +71,14 @@ export class CourseComponent implements OnInit {
   page = 1;
   pageSize = 5;
   total = 0;
-  get isAdmin(): boolean { return this.authService.getUserRole() === 'admin'; }
+  get isAdmin(): boolean {
+    return this.authService.getUserRole() === 'admin';
+  }
   get submitLabel(): string {
     if (this.isAdmin) return this.status === 'CREATE' ? 'Lưu' : 'Cập nhật';
-    return this.form.get('approvalStatus')?.value === 'pending' ? 'Gửi admin duyệt' : 'Lưu bản nháp';
+    return this.form.get('approvalStatus')?.value === 'pending'
+      ? 'Gửi admin duyệt'
+      : 'Lưu bản nháp';
   }
 
   constructor(
@@ -85,7 +89,7 @@ export class CourseComponent implements OnInit {
     private readonly authService: AuthService,
   ) {
     this.form = this.fb.group({
-      courseCode: [''],
+      courseCode: ['', Validators.required],
       courseName: ['', Validators.required],
       category: [''],
       description: [''],
@@ -93,8 +97,8 @@ export class CourseComponent implements OnInit {
       thumbnail: [''],
       teacherId: [null, Validators.required],
       teacherName: [null, Validators.required],
-      duration: [null, Validators.required],
-      maxStudents: [null, Validators.required],
+      duration: [null],
+      maxStudents: [null],
       price: [null],
       startDate: [null],
       endDate: [null],
@@ -106,7 +110,10 @@ export class CourseComponent implements OnInit {
   ngOnInit() {
     this.initialDatatable();
     this.getAllCourses();
-    this.courseService.getCategories().subscribe({ next: (res: any) => this.categoryNames = (res?.data ?? []).map((item: any) => item.name) });
+    this.courseService.getCategories().subscribe({
+      next: (res: any) =>
+        (this.categoryNames = (res?.data ?? []).map((item: any) => item.name)),
+    });
   }
 
   initialDatatable() {
@@ -188,13 +195,22 @@ export class CourseComponent implements OnInit {
             callback: (item: any) => this.handleDelete(item),
           },
           {
-            key: 'approve', label: 'Duyệt', type: 'primary',
-            visible: (item: any) => this.authService.getUserRole() === 'admin' && item.approvalStatus === 'pending',
+            key: 'approve',
+            label: 'Duyệt',
+            type: 'primary',
+            visible: (item: any) =>
+              this.authService.getUserRole() === 'admin' &&
+              item.approvalStatus === 'pending',
             callback: (item: any) => this.review(item, 'approved'),
           },
           {
-            key: 'reject', label: 'Từ chối', type: 'default', danger: true,
-            visible: (item: any) => this.authService.getUserRole() === 'admin' && item.approvalStatus === 'pending',
+            key: 'reject',
+            label: 'Từ chối',
+            type: 'default',
+            danger: true,
+            visible: (item: any) =>
+              this.authService.getUserRole() === 'admin' &&
+              item.approvalStatus === 'pending',
             callback: (item: any) => this.review(item, 'rejected'),
           },
         ],
@@ -210,10 +226,18 @@ export class CourseComponent implements OnInit {
     this.isCourse = true;
     this.form.enable();
     this.form.reset();
-    this.form.patchValue({ status: true, approvalStatus: 'approved' });
+    this.form.patchValue({
+      status: true,
+      approvalStatus: this.isAdmin ? 'approved' : 'pending',
+    });
     if (this.authService.getUserRole() === 'teacher') {
       const user = JSON.parse(localStorage.getItem('user') ?? '{}');
-      this.form.patchValue({ teacherId: user.id ?? user._id ?? user.userName, teacherName: user.userName, status: false, approvalStatus: 'draft' });
+      this.form.patchValue({
+        teacherId: user.id ?? user._id ?? user.userName,
+        teacherName: user.userName,
+        status: false,
+        approvalStatus: 'pending',
+      });
     }
   }
 
@@ -229,7 +253,8 @@ export class CourseComponent implements OnInit {
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => this.form.patchValue({ thumbnail: String(reader.result || '') });
+    reader.onload = () =>
+      this.form.patchValue({ thumbnail: String(reader.result || '') });
     reader.readAsDataURL(file);
   }
   cancelModalCourse() {
@@ -290,7 +315,9 @@ export class CourseComponent implements OnInit {
 
   handleSubmit() {
     if (this.form.invalid) {
-      this.nzMessage.warning('Vui lòng chọn đầy đủ bản ghi');
+      this.nzMessage.warning(
+        'Vui lòng điền các trường bắt buộc: mã khóa học, tên khóa học, mã giảng viên và tên giảng viên.',
+      );
     }
     if (this.form.invalid) {
       Object.values(this.form.controls).forEach((control) => {
@@ -304,43 +331,54 @@ export class CourseComponent implements OnInit {
     }
 
     const payload = this.form.getRawValue();
+    payload.courseCode = String(payload.courseCode ?? '').trim();
+    payload.courseName = String(payload.courseName ?? '').trim();
+    if (!this.isAdmin && this.status === 'CREATE') {
+      payload.approvalStatus =
+        payload.approvalStatus === 'draft' ? 'draft' : 'pending';
+    }
 
     if (this.status === 'CREATE') {
-      this.courseService
-        .createCourse(payload)
-        .pipe(
-          finalize(() => {
-            this.isCourse = false;
-          }),
-        )
-        .subscribe({
-          next: (res: any) => {
-            this.nzMessage.success('Tạo mới thành công', res);
-            this.getAllCourses();
-            this.form.enable();
-          },
-          error: (err: any) => {
-            console.log('Create you error : ', err);
-            this.nzMessage.error('Tạo mới thất bại');
-          },
-        });
+      this.courseService.createCourse(payload).subscribe({
+        next: (res: any) => {
+          const successMessage =
+            !this.isAdmin && payload.approvalStatus === 'pending'
+              ? 'Đã gửi khóa học cho admin duyệt.'
+              : (res?.message ?? 'Tạo khóa học thành công.');
+          this.nzMessage.success(successMessage);
+          this.getAllCourses();
+          this.isCourse = false;
+          this.courseId = null;
+          this.form.reset();
+          this.form.enable();
+        },
+        error: (err: any) => {
+          const message =
+            err?.error?.message ??
+            'Tạo khóa học thất bại. Vui lòng kiểm tra dữ liệu và thử lại.';
+          this.nzMessage.error(message);
+        },
+      });
     } else {
       this.courseService.putCourse(this.courseId, payload).subscribe({
         next: (res: any) => {
-          this.nzMessage.success('Cập nhật thành công', res);
+          this.nzMessage.success(
+            res?.message ?? 'Cập nhật khóa học thành công',
+          );
           this.getAllCourses();
+          this.isCourse = false;
+          this.courseId = null;
+          this.form.enable();
+          this.form.reset();
         },
         error: (err: any) => {
-          this.nzMessage.error('Cập nhật thất bại');
-          console.log('Update your errror : ', err);
+          this.nzMessage.error(
+            err?.error?.message ??
+              'Cập nhật thất bại. Vui lòng kiểm tra dữ liệu và thử lại.',
+          );
         },
       });
     }
-
-    this.courseId = null;
-    this.isCourse = false;
-    this.form.enable();
-    this.form.reset();
   }
 
   handleEdit(item: any) {
@@ -416,8 +454,16 @@ export class CourseComponent implements OnInit {
 
   review(item: any, approvalStatus: 'approved' | 'rejected'): void {
     this.courseService.reviewCourse(item._id, approvalStatus).subscribe({
-      next: (response) => { this.nzMessage.success(response?.message ?? 'Đã cập nhật duyệt khóa học'); this.getAllCourses(); },
-      error: (error) => this.nzMessage.error(error?.error?.message ?? 'Không cập nhật được duyệt khóa học'),
+      next: (response) => {
+        this.nzMessage.success(
+          response?.message ?? 'Đã cập nhật duyệt khóa học',
+        );
+        this.getAllCourses();
+      },
+      error: (error) =>
+        this.nzMessage.error(
+          error?.error?.message ?? 'Không cập nhật được duyệt khóa học',
+        ),
     });
   }
 
@@ -425,6 +471,7 @@ export class CourseComponent implements OnInit {
     this.status = 'DETAIL';
     this.courseId = item._id ?? item.id;
     this.isCourse = true;
+    this.detailLessons = [];
     this.courseService.getCourseById(this.courseId).subscribe({
       next: (res: any) => {
         const courseData = res?.data || res;
@@ -434,6 +481,10 @@ export class CourseComponent implements OnInit {
       error: (err: any) => {
         console.log('Lấy chi tiết khóa học thất bại', err);
       },
+    });
+    this.courseService.getLessons(this.courseId).subscribe({
+      next: (response: any) => (this.detailLessons = response?.data ?? []),
+      error: () => (this.detailLessons = []),
     });
     this.getAllCourses();
   }

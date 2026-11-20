@@ -1,11 +1,14 @@
 const express = require('express');
 const { verifyToken, authorize } = require('../middleware/auth.middleware.js');
-const { getCatalog, enrollCourse, getMyLearning, getManageActivities, submitActivity, createActivity, updateActivity, deleteActivity, gradeSubmission, updateProgress } = require('../controllers/studentLearning.controller.js');
+const { getCatalog, enrollCourse, getMyLearning, getManageActivities, submitActivity, createActivity, updateActivity, deleteActivity, gradeSubmission, updateProgress, getCourseLessons, completeLesson, rememberLesson } = require('../controllers/studentLearning.controller.js');
 
 const router = express.Router();
 router.use(verifyToken);
 router.get('/catalog', authorize('student'), getCatalog);
 router.post('/enroll/:courseId', authorize('student'), enrollCourse);
+router.get('/courses/:courseId/lessons', authorize('student'), getCourseLessons);
+router.post('/enrollments/:enrollmentId/lessons/:lessonId/complete', authorize('student'), completeLesson);
+router.post('/enrollments/:enrollmentId/lessons/:lessonId/view', authorize('student'), rememberLesson);
 router.get('/me', authorize('student'), getMyLearning);
 router.get('/activities/manage', authorize('admin', 'teacher'), getManageActivities);
 router.post('/activities/:activityId/submit', authorize('student'), submitActivity);

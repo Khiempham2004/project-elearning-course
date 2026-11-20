@@ -16,7 +16,13 @@ export interface LearningCourse {
   enrollmentStatus?: 'active' | 'completed' | null;
   progress?: number;
   enrolledCount?: number;
+  level?: 'beginner' | 'intermediate' | 'advanced';
+  description?: string;
+  thumbnail?: string;
+  lessonCount?: number;
 }
+
+export interface CourseLesson { _id: string; section: string; title: string; contentType: 'text' | 'video' | 'pdf'; textContent?: string; videoUrl?: string; pdfUrl?: string; order: number; }
 
 export interface LearningActivity {
   _id: string;
@@ -37,6 +43,7 @@ export interface LearningActivity {
     submittedAt: string;
     score?: number;
     feedback?: string;
+    attempts?: Array<{ answer: string; submittedAt: string; score?: number; feedback?: string }>;
   } | null;
   submissions?: Array<{
     studentId: { _id: string; userName: string; email: string } | string;
@@ -94,6 +101,18 @@ export class StudentLearningService {
 
   getCatalog(): Observable<{ data: LearningCourse[] }> {
     return this.http.get<{ data: LearningCourse[] }>(`${this.api}/catalog`);
+  }
+
+  getCourseLessons(courseId: string): Observable<{ data: { enrollment: any; lessons: CourseLesson[] } }> {
+    return this.http.get<{ data: { enrollment: any; lessons: CourseLesson[] } }>(`${this.api}/courses/${courseId}/lessons`);
+  }
+
+  completeLesson(enrollmentId: string, lessonId: string): Observable<{ data: any; message: string }> {
+    return this.http.post<{ data: any; message: string }>(`${this.api}/enrollments/${enrollmentId}/lessons/${lessonId}/complete`, {});
+  }
+
+  rememberLesson(enrollmentId: string, lessonId: string): Observable<{ data: any }> {
+    return this.http.post<{ data: any }>(`${this.api}/enrollments/${enrollmentId}/lessons/${lessonId}/view`, {});
   }
 
   enroll(courseId: string): Observable<{ message: string }> {

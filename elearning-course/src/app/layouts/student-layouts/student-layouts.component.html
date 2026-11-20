@@ -11,7 +11,7 @@
       <div class="profile-wrapper">
         <button class="profile-trigger" type="button" (click)="toggleProfileMenu()"
           [attr.aria-expanded]="profileMenuOpen()" aria-label="Menu tài khoản">
-          <span class="avatar"><span nz-icon nzType="user"></span></span>
+          <span class="avatar">@if (studentAvatar) { <img [src]="studentAvatar" alt="Ảnh đại diện" /> } @else { <span nz-icon nzType="user"></span> }</span>
           <span class="account-name">{{ studentName }}</span>
           <span nz-icon nzType="down" class="profile-chevron"></span>
         </button>

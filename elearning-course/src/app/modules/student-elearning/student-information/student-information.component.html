@@ -17,8 +17,9 @@
                 <h2>Hồ sơ của tôi</h2>
                 <p>Thông tin được cập nhật vào tài khoản của bạn.</p>
             </div>
-            <span class="profile-avatar">HV</span>
+            <label class="profile-avatar-picker">@if (avatarUrl()) { <img class="profile-avatar" [src]="avatarUrl()" alt="Ảnh đại diện"/> } @else { <span class="profile-avatar">HV</span> }<input type="file" accept="image/*" (change)="onAvatarSelected($event)"/><span>Đổi ảnh</span></label>
         </div>
+        <p class="avatar-save-hint">Ảnh mới đang được xem trước. Bấm “Lưu thay đổi” để lưu ảnh vào tài khoản.</p>
 
         @if (successMessage()) {
         <div class="message success">{{ successMessage() }}</div>

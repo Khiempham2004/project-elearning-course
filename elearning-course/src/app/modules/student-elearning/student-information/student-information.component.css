@@ -87,6 +87,11 @@ h1 {
     font-weight: 700;
 }
 
+.profile-avatar-picker { display:flex; align-items:center; gap:8px; margin:0; cursor:pointer; color:#2456c5; font-size:12px; }
+.profile-avatar-picker input { display:none; }
+.profile-avatar-picker img.profile-avatar { object-fit:cover; }
+.avatar-save-hint { margin:-14px 0 20px; color:#7b8798; font-size:13px; text-align:right; }
+
 label {
     display: block;
     margin: 18px 0 7px;

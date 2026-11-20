@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const { courseModel } = require('../models/course.model.js');
+const CourseCategory = require('../models/courseCategory.model.js');
+const TeacherModel = require('../models/teacher.model.js');
 const { findTeacherProfile } = require('../utils/teacherProfileLookup.js');
 
 const teacherIdentity = async (user) => {
@@ -8,6 +10,29 @@ const teacherIdentity = async (user) => {
     if (!profile || profile.status === false) return null;
     const ids = [profile.teacherCode, String(profile._id), String(user._id), username].filter(Boolean).map(String);
     return { profile, identifiers: [...new Set(ids.flatMap((id) => [id, id.toLowerCase(), id.toUpperCase()]))] };
+};
+
+const ownsCourse = (identity, course) => {
+    if (!identity || !course) return false;
+    if (course.teacherProfileId && String(course.teacherProfileId) === String(identity.profile._id)) return true;
+    const teacherId = String(course.teacherId || '');
+    return identity.identifiers.includes(teacherId) || identity.identifiers.includes(teacherId.toLowerCase()) || identity.identifiers.includes(teacherId.toUpperCase());
+};
+
+const getCategoryReference = async (categoryName) => {
+    const name = String(categoryName || '').trim();
+    if (!name) return null;
+    return CourseCategory.findOne({ name: { $regex: `^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } }).select('_id').lean();
+};
+
+const getTeacherReference = async (teacherId) => {
+    const value = String(teacherId || '').trim();
+    if (!value) return null;
+    if (mongoose.Types.ObjectId.isValid(value)) {
+        const byId = await TeacherModel.findById(value).select('_id').lean();
+        if (byId) return byId;
+    }
+    return TeacherModel.findOne({ teacherCode: value }).select('_id').lean();
 };
 
 const getAllCourse = async (req, res) => {
@@ -25,11 +50,11 @@ const getAllCourse = async (req, res) => {
         }
         if (req.user.role === 'teacher') {
             const identity = await teacherIdentity(req.user);
-            if (!identity) return res.status(403).json({ message: 'Tài khoản chưa được liên kết hồ sơ giảng viên đang hoạt động' });
+            if (!identity) return res.status(403).json({ message: 'Tài khoản teacher chưa có hồ sơ giảng viên được liên kết. Admin vào Quản lý giảng viên, tạo hồ sơ với email đăng nhập trùng email tài khoản hoặc teacherCode trùng tên đăng nhập / ID tài khoản, sau đó bật trạng thái hoạt động.' });
             filter.teacherId = { $in: identity.identifiers };
         }
         const [courses, totalCourses] = await Promise.all([
-            courseModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            courseModel.find(filter).populate('categoryId', 'name').populate('teacherProfileId', 'teacherCode fullName').sort({ createdAt: -1 }).skip(skip).limit(limit),
             courseModel.countDocuments(filter),
         ]);
         return res.status(200).json({
@@ -53,11 +78,11 @@ const getCourseById = async (req, res) => {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ message: 'ID khóa học không hợp lệ' });
         }
-        const course = await courseModel.findById(req.params.id);
+        const course = await courseModel.findById(req.params.id).populate('categoryId', 'name').populate('teacherProfileId', 'teacherCode fullName');
         if (!course) return res.status(404).json({ message: 'Không tìm thấy khóa học' });
         if (req.user.role === 'teacher') {
             const identity = await teacherIdentity(req.user);
-            if (!identity || !identity.identifiers.includes(String(course.teacherId)) && !identity.identifiers.includes(String(course.teacherId).toLowerCase()) && !identity.identifiers.includes(String(course.teacherId).toUpperCase())) return res.status(404).json({ message: 'Không tìm thấy khóa học' });
+            if (!ownsCourse(identity, course)) return res.status(404).json({ message: 'Không tìm thấy khóa học' });
         }
         return res.status(200).json({ data: course, message: 'Lấy khóa học thành công' });
     } catch (error) {
@@ -80,13 +105,19 @@ const createCourse = async (req, res) => {
         }
 
         let approvalStatus = req.user.role === 'admin' ? (courseDetails.approvalStatus || 'approved') : (courseDetails.approvalStatus === 'draft' ? 'draft' : 'pending');
+        const category = await getCategoryReference(courseDetails.category);
+        if (category) courseDetails.categoryId = category._id;
         if (req.user.role === 'teacher') {
             const identity = await teacherIdentity(req.user);
-            if (!identity) return res.status(403).json({ message: 'Tài khoản teacher chưa được liên kết hồ sơ giảng viên đang hoạt động' });
+            if (!identity) return res.status(403).json({ message: 'Tài khoản teacher chưa có hồ sơ giảng viên được liên kết. Admin vào Quản lý giảng viên, tạo hồ sơ với email đăng nhập trùng email tài khoản hoặc teacherCode trùng tên đăng nhập / ID tài khoản, sau đó bật trạng thái hoạt động.' });
             courseDetails.teacherId = identity.profile.teacherCode;
             courseDetails.teacherName = identity.profile.fullName;
+            courseDetails.teacherProfileId = identity.profile._id;
             courseDetails.status = false;
             approvalStatus = courseDetails.approvalStatus === 'draft' ? 'draft' : 'pending';
+        } else {
+            const teacher = await getTeacherReference(courseDetails.teacherId);
+            if (teacher) courseDetails.teacherProfileId = teacher._id;
         }
         const course = await courseModel.create({
             ...courseDetails,
@@ -119,10 +150,20 @@ const updateCourse = async (req, res) => {
         const updates = { ...(req.body || {}) };
         if (req.user.role === 'teacher') {
             const identity = await teacherIdentity(req.user);
-            if (!identity || !identity.identifiers.includes(String(current.teacherId)) && !identity.identifiers.includes(String(current.teacherId).toLowerCase()) && !identity.identifiers.includes(String(current.teacherId).toUpperCase())) return res.status(403).json({ message: 'Bạn chỉ được chỉnh sửa khóa học của mình' });
+            if (!ownsCourse(identity, current)) return res.status(403).json({ message: 'Bạn chỉ được chỉnh sửa khóa học của mình' });
             delete updates.teacherId; delete updates.teacherName; delete updates.status;
+            updates.teacherProfileId = identity.profile._id;
             updates.approvalStatus = updates.approvalStatus === 'draft' ? 'draft' : 'pending';
             updates.status = false;
+        } else {
+            if (updates.category !== undefined) {
+                const category = await getCategoryReference(updates.category);
+                updates.categoryId = category?._id ?? null;
+            }
+            if (updates.teacherId !== undefined) {
+                const teacher = await getTeacherReference(updates.teacherId);
+                updates.teacherProfileId = teacher?._id ?? null;
+            }
         }
         const course = await courseModel.findByIdAndUpdate(req.params.id, updates, {
             new: true,
@@ -148,7 +189,7 @@ const deleteCourse = async (req, res) => {
         if (!current) return res.status(404).json({ message: 'Không tìm thấy khóa học' });
         if (req.user.role === 'teacher') {
             const identity = await teacherIdentity(req.user);
-            if (!identity || !identity.identifiers.includes(String(current.teacherId)) && !identity.identifiers.includes(String(current.teacherId).toLowerCase()) && !identity.identifiers.includes(String(current.teacherId).toUpperCase())) return res.status(403).json({ message: 'Bạn chỉ được xóa khóa học của mình' });
+            if (!ownsCourse(identity, current)) return res.status(403).json({ message: 'Bạn chỉ được xóa khóa học của mình' });
             if (current.approvalStatus === 'approved') return res.status(403).json({ message: 'Khóa học đã được duyệt; liên hệ admin để xóa' });
         }
         const course = await courseModel.findByIdAndDelete(req.params.id);
@@ -174,4 +215,4 @@ const reviewCourse = async (req, res) => {
     }
 };
 
-module.exports = { getAllCourse, getCourseById, createCourse, updateCourse, deleteCourse, reviewCourse, teacherIdentity }
+module.exports = { getAllCourse, getCourseById, createCourse, updateCourse, deleteCourse, reviewCourse, teacherIdentity, ownsCourse }

@@ -16,6 +16,7 @@ const courseSchema = new mongoose.Schema(
         category: {
             type: String
         },
+        categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseCategory', default: null },
 
         description: { type: String, default: '' },
         level: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
@@ -25,6 +26,7 @@ const courseSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        teacherProfileId: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher', default: null },
 
         teacherName: {
             type: String
@@ -64,6 +66,10 @@ const courseSchema = new mongoose.Schema(
         timestamps: true
     }
 );
+
+courseSchema.index({ categoryId: 1, status: 1, approvalStatus: 1 });
+courseSchema.index({ teacherProfileId: 1, status: 1 });
+courseSchema.index({ courseName: 'text', courseCode: 'text', category: 'text', teacherName: 'text' });
 
 const courseModel = mongoose.model('Course', courseSchema);
 

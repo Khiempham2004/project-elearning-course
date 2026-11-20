@@ -113,7 +113,9 @@ const login = async (req, res) => {
             user: {
                 id: user._id,
                 userName: user.userName,
+                email: user.email,
                 role: user.role,
+                avatarUrl: user.avatarUrl || '',
             },
         });
     } catch (error) {
@@ -131,6 +133,7 @@ const getProfile = async (req, res) => {
             userName: req.user.userName,
             email: req.user.email,
             role: req.user.role,
+            avatarUrl: req.user.avatarUrl || '',
         },
     });
 };
@@ -144,6 +147,7 @@ const updateProfile = async (req, res) => {
         }
 
         const update = { userName, email };
+        if (typeof req.body?.avatarUrl === 'string' && req.body.avatarUrl.length <= 6000000) update.avatarUrl = req.body.avatarUrl;
         const { currentPassword, newPassword } = req.body ?? {};
         if (newPassword) {
             if (typeof currentPassword !== "string" || !currentPassword) {
@@ -173,6 +177,7 @@ const updateProfile = async (req, res) => {
                 userName: updatedUser.userName,
                 email: updatedUser.email,
                 role: updatedUser.role,
+                avatarUrl: updatedUser.avatarUrl || '',
             },
         });
     } catch (error) {

@@ -1,11 +1,12 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { CorusesService } from '../../../core/services/coruses.service';
 
 interface LessonItem { _id: string; section: string; title: string; contentType: 'text' | 'video' | 'pdf'; textContent?: string; videoUrl?: string; pdfUrl?: string; order: number; }
 
 @Component({
-  selector: 'app-teacher-lessons', standalone: true, imports: [FormsModule],
+  selector: 'app-teacher-lessons', standalone: true, imports: [FormsModule, RouterLink],
   templateUrl: './teacher-lessons.component.html', styleUrl: './teacher-lessons.component.css',
 })
 export class TeacherLessonsComponent implements OnInit {
@@ -15,18 +16,20 @@ export class TeacherLessonsComponent implements OnInit {
   readonly loading = signal(false);
   readonly error = signal('');
   readonly notice = signal('');
+  readonly courseLoading = signal(true);
   editingId = '';
   form = this.emptyForm();
 
   constructor(private readonly courseService: CorusesService) {}
   ngOnInit(): void {
     this.courseService.getAllCourses('', 1, 100).subscribe({
-      next: (response) => this.courses.set(response?.data ?? []),
-      error: (error) => this.error.set(error?.error?.message ?? 'Không tải được khóa học.'),
+      next: (response) => { this.courses.set(response?.data ?? []); this.courseLoading.set(false); },
+      error: (error) => { this.error.set(error?.error?.message ?? 'Không tải được khóa học.'); this.courseLoading.set(false); },
     });
   }
 
   private emptyForm() { return { section: 'Chương 1', title: '', contentType: 'text' as 'text' | 'video' | 'pdf', textContent: '', videoUrl: '', pdfUrl: '', order: 0 }; }
+  selectedCourse(): any | null { return this.courses().find((course) => course._id === this.courseId()) ?? null; }
   selectCourse(id: string): void { this.courseId.set(id); this.reset(); if (!id) { this.lessons.set([]); return; } this.load(); }
   load(): void {
     if (!this.courseId()) return;
@@ -44,7 +47,13 @@ export class TeacherLessonsComponent implements OnInit {
     const request = this.editingId
       ? this.courseService.updateLesson(this.courseId(), this.editingId, this.form)
       : this.courseService.createLesson(this.courseId(), this.form);
-    request.subscribe({ next: (response) => { this.notice.set(response?.message ?? 'Đã lưu bài giảng.'); this.reset(); this.load(); }, error: (error) => this.error.set(error?.error?.message ?? 'Không lưu được bài giảng.') });
+    request.subscribe({ next: (response) => {
+      const course = this.courses().find((item) => item._id === this.courseId());
+      const pending = course?.approvalStatus && course.approvalStatus !== 'approved';
+      this.notice.set(`${response?.message ?? 'Đã lưu bài giảng.'}${pending ? ' Bài giảng đã lưu; admin cần duyệt khóa học trước khi học viên nhìn thấy.' : ' Học viên đã đăng ký khóa học có thể mở bài trong không gian học tập.'}`);
+      this.reset();
+      this.load();
+    }, error: (error) => this.error.set(error?.error?.message ?? 'Không lưu được bài giảng.') });
   }
   edit(lesson: LessonItem): void { this.editingId = lesson._id; this.form = { section: lesson.section, title: lesson.title, contentType: lesson.contentType, textContent: lesson.textContent ?? '', videoUrl: lesson.videoUrl ?? '', pdfUrl: lesson.pdfUrl ?? '', order: lesson.order ?? 0 }; }
   remove(lesson: LessonItem): void {

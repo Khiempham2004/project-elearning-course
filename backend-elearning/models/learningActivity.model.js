@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const learningActivitySchema = new mongoose.Schema({
     courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true, index: true },
+    quizId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz', default: null },
     kind: { type: String, enum: ['schedule', 'assignment', 'exam'], required: true, index: true },
     title: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
@@ -23,6 +24,7 @@ const learningActivitySchema = new mongoose.Schema({
         submittedAt: { type: Date, default: Date.now },
         score: { type: Number, min: 0, max: 100 },
         feedback: { type: String, default: '' },
+        attempts: [{ answer: { type: String, maxlength: 10000 }, submittedAt: { type: Date, default: Date.now }, score: { type: Number, min: 0, max: 100 }, feedback: { type: String, default: '' } }],
     }],
 }, { timestamps: true });
 

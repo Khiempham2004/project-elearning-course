@@ -1,0 +1,84 @@
+<section class="workspace">
+  <a class="back-link" routerLink="/student/courses">← Khóa học của tôi</a>
+  @if (loading()) {
+    <p>Đang tải bài học...</p>
+  }
+  @if (error()) {
+    <p class="error-message" role="alert">{{ error() }}</p>
+  }
+
+  @if (!loading() && !error() && !lessons().length) {
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">▤</span>
+      <h1>Bài học đang được chuẩn bị</h1>
+      <p>Giảng viên chưa đăng nội dung cho khóa học này. Tiến độ của bạn sẽ được lưu khi bài học được mở.</p>
+      <a routerLink="/student/courses">Quay lại danh sách khóa học</a>
+    </div>
+  }
+
+  @if (lessons().length) {
+    <header class="workspace-header">
+      <p class="eyebrow">KHÔNG GIAN HỌC TẬP</p>
+      <h1>{{ selected()?.title }}</h1>
+      <div class="progress-track">
+        <span [style.width.%]="enrollment()?.progress || 0"></span>
+      </div>
+      <small>Tiến độ khóa học: {{ enrollment()?.progress || 0 }}%</small>
+    </header>
+
+    <div class="learning-layout">
+      <nav class="lesson-list" aria-label="Danh sách bài học">
+        @for (lesson of lessons(); track lesson._id) {
+          <button
+            type="button"
+            (click)="select(lesson)"
+            [class.active]="selected()?._id === lesson._id"
+          >
+            <span>{{ lesson.section }} · {{ lesson.title }}</span>
+            @if (isDone(lesson)) {
+              <span class="done-mark" aria-label="Đã hoàn thành">✓</span>
+            }
+          </button>
+        }
+      </nav>
+
+      <article class="lesson-content">
+        @if (selected(); as lesson) {
+          <h2>{{ lesson.title }}</h2>
+          @if (lesson.contentType === 'video' && lesson.videoUrl) {
+            <video controls [src]="lesson.videoUrl"></video>
+          } @else if (lesson.contentType === 'pdf' && lesson.pdfUrl) {
+            <a [href]="lesson.pdfUrl" target="_blank" rel="noopener">
+              Tải / xem tài liệu PDF ↗
+            </a>
+          } @else {
+            <div class="text-content">
+              {{ lesson.textContent || 'Bài học chưa có nội dung.' }}
+            </div>
+          }
+
+          <div class="lesson-controls">
+            <button type="button" (click)="move(-1)" [disabled]="index() === 0">
+              ← Bài trước
+            </button>
+            <button
+              type="button"
+              class="complete-button"
+              (click)="complete()"
+              [disabled]="isDone(lesson) || saving()"
+            >
+              {{ isDone(lesson) ? 'Đã hoàn thành' : 'Đánh dấu hoàn thành' }}
+            </button>
+            <button
+              type="button"
+              (click)="move(1)"
+              [disabled]="index() === lessons().length - 1"
+            >
+              Bài tiếp →
+            </button>
+          </div>
+        }
+      </article>
+    </div>
+  }
+</section>

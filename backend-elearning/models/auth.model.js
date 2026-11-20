@@ -25,10 +25,14 @@ const authSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
+        avatarUrl: { type: String, default: '' },
     },
     {
         timestamps: true
     }
 );
+
+authSchema.index({ role: 1, status: 1 });
+authSchema.index({ userName: 'text', email: 'text' });
 
 module.exports = mongoose.model('Auth', authSchema);

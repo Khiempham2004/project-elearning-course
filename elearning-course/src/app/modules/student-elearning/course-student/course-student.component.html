@@ -65,6 +65,13 @@
       }
     </nav>
 
+    <div class="catalog-filters">
+      <button type="button" [class.active]="!showingMine()" (click)="showingMine.set(false)">Tất cả khóa học</button>
+      <button type="button" [class.active]="showingMine()" (click)="showingMine.set(true)">Khóa học của tôi</button>
+      <label>Cấp độ <select [value]="activeLevel()" (change)="activeLevel.set($any($event.target).value)"><option>Tất cả</option><option value="beginner">Cơ bản</option><option value="intermediate">Trung cấp</option><option value="advanced">Nâng cao</option></select></label>
+      <label>Sắp xếp <select [value]="sortBy()" (change)="sortBy.set($any($event.target).value)"><option value="popular">Phổ biến</option><option value="price-asc">Giá thấp đến cao</option><option value="price-desc">Giá cao đến thấp</option></select></label>
+    </div>
+
     <div class="course-grid">
       @for (course of filteredCourses(); track course.id) {
         <article class="course-card">
@@ -79,19 +86,21 @@
               <span></span>{{ course.status }}
             </div>
             <h3>{{ course.title }}</h3>
+            <a class="course-learning-link" [routerLink]="['/student/courses', course.id]">Xem chi tiết khóa học →</a>
             <p class="course-description">{{ course.description }}</p>
             <div class="instructor-row">
               <span class="teacher-avatar">{{ course.instructor.charAt(0) }}</span>
               <span><small>Giảng viên phụ trách</small><strong>{{ course.instructor }}</strong></span>
             </div>
             <div class="course-meta"><span>◷ Thời lượng: {{ course.duration }}</span></div>
+            <div class="course-meta price-row"><strong>{{ course.price ? (course.price + ' ₫') : 'Miễn phí' }}</strong><span>{{ course.popularity }} học viên</span></div>
             @if (course.enrollmentStatus) {
               <div class="progress-heading"><span>Tiến độ học</span><strong>{{ course.progress }}%</strong></div>
               <div class="progress-track"><span [style.width.%]="course.progress"></span></div>
-              <a class="course-learning-link" routerLink="/student/schedule">Xem lịch & vào buổi học →</a>
+              <a class="course-learning-link" [routerLink]="['/student/learn', course.id]">{{ course.progress > 0 ? 'Tiếp tục học →' : 'Bắt đầu học →' }}</a>
             } @else {
-              <button type="button" (click)="enroll(course)" [disabled]="!!enrolling()">
-                {{ enrolling() === course.id ? 'Đang đăng ký...' : 'Đăng ký khóa học' }}
+              <button type="button" (click)="enroll(course)" [disabled]="!!enrolling() || course.price > 0">
+                {{ enrolling() === course.id ? 'Đang đăng ký...' : course.price > 0 ? 'Cần thanh toán' : 'Đăng ký & bắt đầu học' }}
               </button>
             }
           </div>

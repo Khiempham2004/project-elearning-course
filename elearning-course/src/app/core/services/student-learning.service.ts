@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { ApiResponse } from '../types/api-response';
 
 export interface LearningCourse {
   _id: string;
@@ -95,16 +96,16 @@ export class StudentLearningService {
   private readonly api = 'http://localhost:3001/api/student-learning';
   constructor(private readonly http: HttpClient) {}
 
-  getMyLearning(): Observable<{ data: MyLearning }> {
-    return this.http.get<{ data: MyLearning }>(`${this.api}/me`);
+  getMyLearning(): Observable<ApiResponse<MyLearning>> {
+    return this.http.get<ApiResponse<MyLearning>>(`${this.api}/me`);
   }
 
-  getCatalog(): Observable<{ data: LearningCourse[] }> {
-    return this.http.get<{ data: LearningCourse[] }>(`${this.api}/catalog`);
+  getCatalog(): Observable<ApiResponse<LearningCourse[]>> {
+    return this.http.get<ApiResponse<LearningCourse[]>>(`${this.api}/catalog`);
   }
 
-  getCourseLessons(courseId: string): Observable<{ data: { enrollment: any; lessons: CourseLesson[] } }> {
-    return this.http.get<{ data: { enrollment: any; lessons: CourseLesson[] } }>(`${this.api}/courses/${courseId}/lessons`);
+  getCourseLessons(courseId: string): Observable<ApiResponse<{ enrollment: any; lessons: CourseLesson[] }>> {
+    return this.http.get<ApiResponse<{ enrollment: any; lessons: CourseLesson[] }>>(`${this.api}/courses/${courseId}/lessons`);
   }
 
   completeLesson(enrollmentId: string, lessonId: string): Observable<{ data: any; message: string }> {

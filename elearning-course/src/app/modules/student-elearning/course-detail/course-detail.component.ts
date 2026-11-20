@@ -5,6 +5,8 @@ import {
   LearningCourse,
   StudentLearningService,
 } from '../../../core/services/student-learning.service';
+import { formatVnd } from '../../../core/utils/format-currency.util';
+import { StudentLearningStore } from '../../../core/store/student-learning.store';
 
 @Component({
   selector: 'app-course-detail',
@@ -25,6 +27,7 @@ export class CourseDetailComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly api: StudentLearningService,
+    private readonly learningStore: StudentLearningStore,
     private readonly router: Router,
   ) {}
 
@@ -36,7 +39,7 @@ export class CourseDetailComponent implements OnInit {
       return;
     }
 
-    this.api.getCatalog().subscribe({
+    this.learningStore.loadCatalog().subscribe({
       next: ({ data }) => {
         this.course.set(data.find((course) => course._id === courseId) ?? null);
         this.api.getCourseLessons(courseId).subscribe({
@@ -70,7 +73,7 @@ export class CourseDetailComponent implements OnInit {
   }
 
   formatPrice(price: number): string {
-    return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(price);
+    return formatVnd(price);
   }
 
   enroll(): void {

@@ -19,6 +19,8 @@ const courseSchema = new mongoose.Schema(
         categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseCategory', default: null },
 
         description: { type: String, default: '' },
+        learningOutcomes: { type: [String], default: [] },
+        prerequisites: { type: [String], default: [] },
         level: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
         thumbnail: { type: String, default: '' },
 

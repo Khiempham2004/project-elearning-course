@@ -1,0 +1,33 @@
+<section class="info-card">
+  @if (course?.thumbnail) {
+    <img
+      class="thumbnail"
+      [src]="course?.thumbnail"
+      [alt]="course?.courseName || 'Ảnh khóa học'"
+    />
+  }
+  <div class="info-content">
+    <h2>Nội dung khóa học</h2>
+    @if (course?.learningOutcomes?.length) {
+      <h3>Bạn sẽ học được</h3>
+      <ul>
+        @for (item of course?.learningOutcomes; track $index) {
+          <li>{{ item }}</li>
+        }
+      </ul>
+    } @else {
+      <p class="muted">Chưa có thông tin về nội dung sẽ học.</p>
+    }
+    @if (course?.prerequisites?.length) {
+      <h3>Yêu cầu đầu vào</h3>
+      <ul>
+        @for (item of course?.prerequisites; track $index) {
+          <li>{{ item }}</li>
+        }
+      </ul>
+    } @else {
+      <h3>Yêu cầu đầu vào</h3>
+      <p class="muted">Không có yêu cầu đầu vào.</p>
+    }
+  </div>
+</section>

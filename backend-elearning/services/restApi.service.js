@@ -8,6 +8,8 @@ const Notification = require("../models/notification.model.js");
 const { courseModel } = require("../models/course.model.js");
 const { findTeacherProfile } = require("../utils/teacherProfileLookup.js");
 
+const ENROLLED_STATUSES = ["NotStarted", "InProgress", "Completed", "active", "completed"];
+
 const assertCourseAccess = async (courseId, user) => {
   const course = await courseModel
     .findById(courseId)
@@ -58,7 +60,7 @@ const listSections = async ({ courseId, ...query }, user) => {
   if (user.role === "student") {
     const enrolled = await Enrollment.find({
       studentId: user._id,
-      status: { $in: ["active", "completed"] },
+      status: { $in: ENROLLED_STATUSES },
     })
       .select("courseId")
       .lean();
@@ -130,7 +132,7 @@ const listQuizzes = async ({ courseId, status, ...query }, user) => {
   if (user.role === "student") {
     const enrollments = await Enrollment.find({
       studentId: user._id,
-      status: { $in: ["active", "completed"] },
+      status: { $in: ENROLLED_STATUSES },
     })
       .select("courseId")
       .lean();
@@ -181,7 +183,7 @@ const getQuiz = async (id, user) => {
     const enrolled = await Enrollment.exists({
       studentId: user._id,
       courseId: quiz.courseId?._id,
-      status: { $in: ["active", "completed"] },
+      status: { $in: ENROLLED_STATUSES },
     });
     if (!enrolled || quiz.status !== "published") return null;
   } else await assertCourseAccess(quiz.courseId?._id, user);
@@ -213,7 +215,7 @@ const listQuestions = async (quizId, user) => {
     const enrolled = await Enrollment.exists({
       studentId: user._id,
       courseId: quiz.courseId,
-      status: { $in: ["active", "completed"] },
+      status: { $in: ENROLLED_STATUSES },
     });
     if (!enrolled || quiz.status !== "published") return [];
     return Question.find({ quizId })
@@ -263,7 +265,7 @@ const submitQuiz = async (quizId, studentId, answers) => {
   const enrolled = await Enrollment.exists({
     studentId,
     courseId: quiz.courseId,
-    status: { $in: ["active", "completed"] },
+    status: { $in: ENROLLED_STATUSES },
   });
   if (!enrolled) return { error: "Bạn chưa đăng ký khóa học này", status: 403 };
   const questions = await Question.find({ quizId }).sort({ order: 1 }).lean();

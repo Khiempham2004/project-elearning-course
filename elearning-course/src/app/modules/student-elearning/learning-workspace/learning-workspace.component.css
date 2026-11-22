@@ -109,6 +109,29 @@
   line-height: 1.8;
 }
 
+.course-complete {
+  margin: 12px 0 0;
+  color: #168255;
+  font-weight: 700;
+}
+
+.course-completion {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 56px 24px;
+  border: 1px solid #d9eee3;
+  border-radius: 18px;
+  background: #f5fcf8;
+  text-align: center;
+}
+
+.course-completion > span { color: #159263; font-size: 42px; }
+.course-completion .eyebrow { margin: 0; color: #17845d; font-size: 12px; font-weight: 800; letter-spacing: 1px; }
+.course-completion h1, .course-completion p { margin: 0; }
+.course-completion a { margin-top: 8px; color: #245ec7; font-weight: 700; text-decoration: none; }
+
 .lesson-controls {
   display: flex;
   justify-content: space-between;

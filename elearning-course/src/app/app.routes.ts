@@ -280,6 +280,15 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'courses/:courseId',
+    loadComponent: () =>
+      import('./modules/student-elearning/course-detail/course-detail.component').then(
+        (m) => m.CourseDetailComponent,
+      ),
+    canActivate: [authGuard],
+    data: { roles: ['student'] },
+  },
+  {
     path: 'courses',
     component: CourseLayoutComponent,
     canActivate: [authGuard],

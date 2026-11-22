@@ -605,6 +605,7 @@
 .course-meta.price-row strong { color:#213f59; font-size:15px; font-weight:700; }
 
 .course-learning-link { font-size:16px; }
+.course-completed-label { display: block; padding: 6px 0; color: #258263; font-size: 14px; font-weight: 700; }
 .course-body button { font-family:Arial,Helvetica,sans-serif; font-size:14px; }
 
 .progress-heading {

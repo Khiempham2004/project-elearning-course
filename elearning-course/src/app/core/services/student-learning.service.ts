@@ -8,7 +8,9 @@ export interface LearningCourse {
   courseCode: string;
   courseName: string;
   category?: string;
+  categoryId?: { _id: string; name: string } | null;
   teacherName?: string;
+  teacherProfileId?: { _id: string; fullName: string } | null;
   duration?: number;
   price?: number;
   startDate?: string;
@@ -21,9 +23,19 @@ export interface LearningCourse {
   description?: string;
   thumbnail?: string;
   lessonCount?: number;
+  learningOutcomes?: string[];
+  prerequisites?: string[];
 }
 
-export interface CourseLesson { _id: string; section: string; title: string; contentType: 'text' | 'video' | 'pdf'; textContent?: string; videoUrl?: string; pdfUrl?: string; order: number; }
+export interface CourseLesson { _id: string; section?: string; title: string; contentType: 'text' | 'video' | 'pdf' | 'quiz'; textContent?: string; videoUrl?: string; pdfUrl?: string; order: number; durationMinutes?: number; }
+export interface CourseCurriculumSection { _id: string; title: string; order: number; lessons: CourseLesson[]; }
+export interface CourseDetailData {
+  course: LearningCourse;
+  approved: boolean;
+  enrollment: { _id: string; status: string; progress: number } | null;
+  curriculum: CourseCurriculumSection[];
+  counts: { sections: number; lessons: number; durationMinutes: number };
+}
 
 export interface LearningActivity {
   _id: string;
@@ -102,6 +114,10 @@ export class StudentLearningService {
 
   getCatalog(): Observable<ApiResponse<LearningCourse[]>> {
     return this.http.get<ApiResponse<LearningCourse[]>>(`${this.api}/catalog`);
+  }
+
+  getCourseDetail(courseId: string): Observable<ApiResponse<CourseDetailData>> {
+    return this.http.get<ApiResponse<CourseDetailData>>(`${this.api}/courses/${courseId}/detail`);
   }
 
   getCourseLessons(courseId: string): Observable<ApiResponse<{ enrollment: any; lessons: CourseLesson[] }>> {

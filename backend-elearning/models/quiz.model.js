@@ -7,6 +7,7 @@ const quizSchema = new mongoose.Schema(
       ref: "Course",
       required: true,
     },
+    sectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Section', default: null },
     activityId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "LearningActivity",

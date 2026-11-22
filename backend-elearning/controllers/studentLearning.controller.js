@@ -6,8 +6,11 @@ const Question = require('../models/question.model.js');
 const QuizAttempt = require('../models/quizAttempt.model.js');
 const Lesson = require('../models/lesson.model.js');
 const LessonProgress = require('../models/lessonProgress.model.js');
+const Section = require('../models/section.model.js');
 const { courseModel } = require("../models/course.model.js");
 const { findTeacherProfile } = require("../utils/teacherProfileLookup.js");
+
+const ENROLLED_STATUSES = ['NotStarted', 'InProgress', 'Completed', 'active', 'completed'];
 
 const isStudent = (req) => req.user?.role === "student";
 const isStaff = (req) => ["admin", "teacher"].includes(req.user?.role);
@@ -85,14 +88,14 @@ const getCatalog = async (req, res) => {
         const Lesson = require('../models/lesson.model.js');
         const ids = courses.map(course => course._id);
         const [counts, lessonCounts] = await Promise.all([
-            Enrollment.aggregate([{ $match: { courseId: { $in: ids }, status: { $in: ['active', 'completed'] } } }, { $group: { _id: '$courseId', count: { $sum: 1 } } }]),
+            Enrollment.aggregate([{ $match: { courseId: { $in: ids }, status: { $in: ENROLLED_STATUSES } } }, { $group: { _id: '$courseId', count: { $sum: 1 } } }]),
             Lesson.aggregate([{ $match: { courseId: { $in: ids } } }, { $group: { _id: '$courseId', count: { $sum: 1 } } }]),
         ]);
         const countMap = new Map(counts.map(item => [String(item._id), item.count]));
         const lessonMap = new Map(lessonCounts.map(item => [String(item._id), item.count]));
         const enrollments = await Enrollment.find({
             studentId: req.user._id,
-            status: { $ne: "cancelled" },
+            status: { $in: ENROLLED_STATUSES },
         })
             .select("courseId status progress")
             .lean();
@@ -107,7 +110,8 @@ const getCatalog = async (req, res) => {
                     enrolledCount: countMap.get(String(course._id)) || 0,
                     lessonCount: lessonMap.get(String(course._id)) || 0,
                     enrollmentStatus: enrollment?.status || null,
-                    progress: enrollment?.progress || 0,
+                    progress: enrollment?.progressPercentage ?? enrollment?.progress ?? 0,
+                    progressPercentage: enrollment?.progressPercentage ?? enrollment?.progress ?? 0,
                 };
             }),
         });
@@ -117,39 +121,84 @@ const getCatalog = async (req, res) => {
     }
 };
 
-const enrollCourse = async (req, res) => {
+const getCourseDetail = async (req, res) => {
     try {
         const { courseId } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(courseId)) return res.status(400).json({ message: 'Mã khóa học không hợp lệ' });
+        const course = await courseModel.findById(courseId).populate('categoryId', 'name').populate('teacherProfileId', 'fullName').lean();
+        if (!course) return res.status(404).json({ message: 'Không tìm thấy khóa học' });
+        const enrollment = await Enrollment.findOne({ studentId: req.user._id, courseId, status: { $in: ENROLLED_STATUSES } }).select('_id status progress progressPercentage completedLessons totalLessons completedAt').lean();
+        const [sections, lessons, quizzes] = await Promise.all([
+            Section.find({ courseId }).sort({ order: 1, createdAt: 1 }).lean(),
+            Lesson.find({ courseId }).select('_id sectionId section title contentType durationMinutes order').sort({ section: 1, order: 1, createdAt: 1 }).lean(),
+            Quiz.find({ courseId, status: 'published' }).select('_id sectionId title durationMinutes startsAt dueAt').sort({ startsAt: 1, createdAt: 1 }).lean(),
+        ]);
+        const sectionById = new Map(sections.map((section) => [String(section._id), section]));
+        const sectionByName = new Map(sections.map((section) => [section.title.trim().toLocaleLowerCase(), section]));
+        const groups = new Map();
+        const getGroup = (section, fallbackName = 'Chương 1', countAsSection = true) => {
+            const resolved = section || sectionByName.get(fallbackName.trim().toLocaleLowerCase());
+            const key = resolved ? String(resolved._id) : `legacy:${fallbackName}`;
+            if (!groups.has(key)) groups.set(key, { _id: resolved?._id ?? key, title: resolved?.title ?? fallbackName, order: resolved?.order ?? 0, countAsSection, lessons: [] });
+            return groups.get(key);
+        };
+        sections.forEach((section) => getGroup(section));
+        lessons.forEach((lesson) => {
+            const section = (lesson.sectionId && sectionById.get(String(lesson.sectionId))) || sectionByName.get(String(lesson.section || 'Chương 1').trim().toLocaleLowerCase());
+            getGroup(section, lesson.section || 'Chương 1').lessons.push({ _id: lesson._id, title: lesson.title, contentType: lesson.contentType, durationMinutes: lesson.durationMinutes || 0, order: lesson.order || 0 });
+        });
+        quizzes.forEach((quiz) => {
+            const section = quiz.sectionId && sectionById.get(String(quiz.sectionId));
+            getGroup(section, 'Bài kiểm tra', false).lessons.push({ _id: quiz._id, title: quiz.title, contentType: 'quiz', durationMinutes: quiz.durationMinutes || 0, order: Number.MAX_SAFE_INTEGER });
+        });
+        const curriculum = [...groups.values()].map((section) => ({ ...section, lessons: section.lessons.sort((a, b) => a.order - b.order) })).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, 'vi'));
+        const approved = (course.approvalStatus === 'approved' || !course.approvalStatus) && course.status !== false;
+        return res.json({ data: { course: { ...course, teacherName: course.teacherProfileId?.fullName || course.teacherName, category: course.categoryId?.name || course.category }, approved, enrollment, curriculum, counts: { sections: [...groups.values()].filter((section) => section.countAsSection).length, lessons: lessons.length, durationMinutes: curriculum.reduce((sum, section) => sum + section.lessons.reduce((lessonSum, lesson) => lessonSum + lesson.durationMinutes, 0), 0) } } });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Không tải được thông tin khóa học' });
+    }
+};
+
+const enrollCourse = async (req, res) => {
+    try {
+        const courseId = req.params.courseId || req.body?.courseId;
         if (!mongoose.Types.ObjectId.isValid(courseId))
             return res.status(400).json({ message: "Mã khóa học không hợp lệ" });
-        const course = await courseModel.findOne({ _id: courseId, status: true });
+        const course = await courseModel.findOne({ _id: courseId, status: true, $or: [{ approvalStatus: 'approved' }, { approvalStatus: { $exists: false } }] });
         if (!course)
             return res
                 .status(404)
-                .json({ message: "Khóa học không tồn tại hoặc đã ngừng tuyển sinh" });
+                .json({ message: "Khóa học không tồn tại, chưa được duyệt hoặc đã ngừng tuyển sinh" });
         const current = await Enrollment.findOne({
             studentId: req.user._id,
             courseId,
         });
-        if (current?.status === "active" || current?.status === "completed")
+        if (current)
             return res.status(409).json({ message: "Bạn đã đăng ký khóa học này" });
         if (course.maxStudents) {
             const count = await Enrollment.countDocuments({
                 courseId,
-                status: "active",
+                status: { $in: ENROLLED_STATUSES },
             });
             if (count >= course.maxStudents)
                 return res
                     .status(409)
                     .json({ message: "Khóa học đã đủ số lượng học viên" });
         }
-        const enrollment = current
-            ? await Enrollment.findByIdAndUpdate(
-                current._id,
-                { status: "active", enrolledAt: new Date() },
-                { new: true },
-            )
-            : await Enrollment.create({ studentId: req.user._id, courseId });
+        const totalLessons = await Lesson.countDocuments({ courseId });
+        const enrollment = await Enrollment.create({
+            studentId: req.user._id,
+            courseId,
+            status: 'NotStarted',
+            progress: 0,
+            progressPercentage: 0,
+            completedLessons: 0,
+            totalLessons,
+            lastLessonId: null,
+            enrolledAt: new Date(),
+            completedAt: null,
+        });
         return res
             .status(201)
             .json({ data: enrollment, message: "Đăng ký khóa học thành công" });
@@ -165,7 +214,7 @@ const getCourseLessons = async (req, res) => {
     try {
         const { courseId } = req.params;
         if (!mongoose.Types.ObjectId.isValid(courseId)) return res.status(400).json({ message: 'Mã khóa học không hợp lệ' });
-        const enrollment = await Enrollment.findOne({ studentId: req.user._id, courseId, status: { $in: ['active', 'completed'] } });
+        const enrollment = await Enrollment.findOne({ studentId: req.user._id, courseId, status: { $in: ENROLLED_STATUSES } });
         const course = await courseModel.findOne({ _id: courseId, status: true, $or: [{ approvalStatus: 'approved' }, { approvalStatus: { $exists: false } }] }).select('_id');
         if (!course) return res.status(404).json({ message: 'Không tìm thấy khóa học' });
         const Lesson = require('../models/lesson.model.js');
@@ -189,7 +238,7 @@ const getCourseLessons = async (req, res) => {
 const completeLesson = async (req, res) => {
     try {
         const { enrollmentId, lessonId } = req.params;
-        const enrollment = await Enrollment.findOne({ _id: enrollmentId, studentId: req.user._id, status: 'active' });
+        const enrollment = await Enrollment.findOne({ _id: enrollmentId, studentId: req.user._id, status: { $in: ['NotStarted', 'InProgress', 'active'] } });
         if (!enrollment) return res.status(404).json({ message: 'Không tìm thấy khóa học đang học' });
         const Lesson = require('../models/lesson.model.js');
         const lesson = await Lesson.findOne({ _id: lessonId, courseId: enrollment.courseId });
@@ -198,8 +247,11 @@ const completeLesson = async (req, res) => {
         if (!enrollment.completedLessonIds.some(id => String(id) === String(lesson._id))) enrollment.completedLessonIds.push(lesson._id);
         enrollment.completedLessons = enrollment.completedLessonIds.length;
         const total = await Lesson.countDocuments({ courseId: enrollment.courseId });
-        enrollment.progress = total ? Math.round(enrollment.completedLessons / total * 100) : 0;
-        if (total > 0 && enrollment.completedLessons >= total) { enrollment.progress = 100; enrollment.status = 'completed'; }
+        enrollment.totalLessons = total;
+        enrollment.progressPercentage = total ? Math.round(enrollment.completedLessons / total * 100) : 0;
+        enrollment.progress = enrollment.progressPercentage;
+        enrollment.status = total > 0 && enrollment.completedLessons >= total ? 'Completed' : 'InProgress';
+        enrollment.completedAt = enrollment.status === 'Completed' ? (enrollment.completedAt || new Date()) : null;
         await LessonProgress.findOneAndUpdate(
             { enrollmentId: enrollment._id, lessonId: lesson._id },
             { $set: { studentId: req.user._id, courseId: enrollment.courseId, isCompleted: true, lastViewedAt: new Date(), completedAt: new Date() } },
@@ -213,7 +265,7 @@ const completeLesson = async (req, res) => {
 const rememberLesson = async (req, res) => {
     try {
         const { enrollmentId, lessonId } = req.params;
-        const enrollment = await Enrollment.findOne({ _id: enrollmentId, studentId: req.user._id, status: { $in: ['active', 'completed'] } });
+        const enrollment = await Enrollment.findOne({ _id: enrollmentId, studentId: req.user._id, status: { $in: ENROLLED_STATUSES } });
         if (!enrollment) return res.status(404).json({ message: 'Không tìm thấy khóa học đã đăng ký' });
         const Lesson = require('../models/lesson.model.js');
         const exists = await Lesson.exists({ _id: lessonId, courseId: enrollment.courseId });
@@ -235,7 +287,7 @@ const getMyLearning = async (req, res) => {
     try {
         const enrollments = await Enrollment.find({
             studentId: req.user._id,
-            status: { $in: ["active", "completed"] },
+            status: { $in: ENROLLED_STATUSES },
         })
             .populate("courseId")
             .sort({ enrolledAt: -1 })
@@ -281,6 +333,32 @@ const getMyLearning = async (req, res) => {
     }
 };
 
+const getMyCourses = async (req, res) => {
+    try {
+        const enrollments = await Enrollment.find({ studentId: req.user._id, status: { $in: ENROLLED_STATUSES } })
+            .populate('courseId')
+            .sort({ enrolledAt: -1 })
+            .lean();
+        return res.json({ data: enrollments.filter((enrollment) => enrollment.courseId) });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Không tải được danh sách khóa học đã đăng ký' });
+    }
+};
+
+const getEnrollmentByCourse = async (req, res) => {
+    try {
+        const { courseId } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(courseId)) return res.status(400).json({ message: 'Mã khóa học không hợp lệ' });
+        const enrollment = await Enrollment.findOne({ studentId: req.user._id, courseId, status: { $in: ENROLLED_STATUSES } }).populate('courseId').lean();
+        if (!enrollment) return res.status(404).json({ message: 'Chưa đăng ký khóa học này' });
+        return res.json({ data: enrollment });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Không tải được thông tin đăng ký' });
+    }
+};
+
 const getManageActivities = async (req, res) => {
     try {
         let courseFilter = {};
@@ -295,8 +373,8 @@ const getManageActivities = async (req, res) => {
         const courseIds = courses.map((course) => course._id);
         const [activities, enrollmentCounts, enrollments, lessonCount] = await Promise.all([
             LearningActivity.find({ courseId: { $in: courseIds } }).populate('courseId', 'courseName courseCode').populate('submissions.studentId', 'userName email').sort({ startsAt: 1, dueAt: 1, createdAt: -1 }).lean(),
-            Enrollment.aggregate([{ $match: { courseId: { $in: courseIds }, status: { $in: ['active', 'completed'] } } }, { $group: { _id: '$courseId', count: { $sum: 1 } } }]),
-            Enrollment.find({ courseId: { $in: courseIds }, status: { $in: ['active', 'completed'] } }).populate('studentId', 'userName email').populate('courseId', 'courseName courseCode').sort({ enrolledAt: -1 }).lean(),
+            Enrollment.aggregate([{ $match: { courseId: { $in: courseIds }, status: { $in: ENROLLED_STATUSES } } }, { $group: { _id: '$courseId', count: { $sum: 1 } } }]),
+            Enrollment.find({ courseId: { $in: courseIds }, status: { $in: ENROLLED_STATUSES } }).populate('studentId', 'userName email').populate('courseId', 'courseName courseCode').sort({ enrolledAt: -1 }).lean(),
             Lesson.countDocuments({ courseId: { $in: courseIds } }),
         ]);
         const counts = new Map(enrollmentCounts.map((entry) => [String(entry._id), entry.count]));
@@ -382,7 +460,7 @@ const submitActivity = async (req, res) => {
         const enrollment = await Enrollment.findOne({
             studentId: req.user._id,
             courseId: activity.courseId,
-            status: "active",
+            status: { $in: ENROLLED_STATUSES },
         });
         if (!enrollment)
             return res
@@ -604,7 +682,9 @@ const updateProgress = async (req, res) => {
                 .json({ message: "Số bài học hoàn thành không hợp lệ" });
         const updates = {
             progress,
-            status: progress === 100 ? "completed" : "active",
+            progressPercentage: progress,
+            status: progress === 100 ? 'Completed' : progress > 0 ? 'InProgress' : 'NotStarted',
+            completedAt: progress === 100 ? new Date() : null,
         };
         if (completedLessons !== undefined)
             updates.completedLessons = completedLessons;
@@ -636,6 +716,7 @@ const updateProgress = async (req, res) => {
 };
 
 module.exports = {
+    getCourseDetail,
     isStudent,
     isStaff,
     getCatalog,
@@ -644,6 +725,8 @@ module.exports = {
     completeLesson,
     rememberLesson,
     getMyLearning,
+    getMyCourses,
+    getEnrollmentByCourse,
     getManageActivities,
     submitActivity,
     createActivity,

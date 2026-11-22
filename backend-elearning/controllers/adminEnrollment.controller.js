@@ -13,7 +13,7 @@ const listEnrollments = async (req, res) => {
         );
         const filter = {};
         // Lọc theo trạng thái
-        if (["active", "completed", "cancelled"].includes(req.query.status))
+        if (["NotStarted", "InProgress", "Completed", "active", "completed", "cancelled"].includes(req.query.status))
             filter.status = req.query.status;
           // Lọc theo khóa học
         if (
@@ -77,7 +77,7 @@ const updateEnrollment = async (req, res) => {
             return res.status(400).json({ message: "ID đăng ký không hợp lệ" });
         const updates = {};
         if (req.body?.status !== undefined) {
-            if (!["active", "completed", "cancelled"].includes(req.body.status))
+            if (!["NotStarted", "InProgress", "Completed", "active", "completed", "cancelled"].includes(req.body.status))
                 return res
                     .status(400)
                     .json({ message: "Trạng thái đăng ký không hợp lệ" });
@@ -90,6 +90,9 @@ const updateEnrollment = async (req, res) => {
                     .status(400)
                     .json({ message: "Tiến độ phải nằm trong khoảng 0 đến 100" });
             updates.progress = progress;
+            updates.progressPercentage = progress;
+            updates.status = progress === 100 ? "Completed" : progress > 0 ? "InProgress" : "NotStarted";
+            updates.completedAt = progress === 100 ? new Date() : null;
         }
         if (req.body?.completedLessons !== undefined) {
             const completedLessons = Number(req.body.completedLessons);

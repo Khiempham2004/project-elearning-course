@@ -42,6 +42,7 @@ export class TeacherLessonsComponent implements OnInit {
   save(): void {
     this.error.set(''); this.notice.set('');
     if (!this.courseId() || !this.form.title.trim()) { this.error.set('Chọn khóa học và nhập tên bài giảng.'); return; }
+    if (this.form.contentType === 'text' && !this.form.textContent.trim()) { this.error.set('Nhập nội dung bài đọc để học viên có thể học.'); return; }
     if (this.form.contentType === 'video' && !this.form.videoUrl.trim()) { this.error.set('Nhập URL video.'); return; }
     if (this.form.contentType === 'pdf' && !this.form.pdfUrl.trim()) { this.error.set('Nhập URL tài liệu PDF.'); return; }
     const request = this.editingId

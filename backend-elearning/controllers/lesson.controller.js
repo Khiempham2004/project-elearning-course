@@ -59,10 +59,11 @@ const saveLesson = async (req, res) => {
     try {
         const course = await getOwnedCourse(req, res);
         if (!course) return;
-        const { title, section, contentType, textContent, videoUrl, pdfUrl, order } = req.body || {};
+        const { title, section, contentType, textContent, videoUrl, pdfUrl, durationMinutes, order } = req.body || {};
         if (!String(title || '').trim() || !['text', 'video', 'pdf'].includes(contentType)) {
             return res.status(400).json({ message: 'Nhập tiêu đề và chọn loại nội dung hợp lệ' });
         }
+        if (contentType === 'text' && !String(textContent || '').trim()) return res.status(400).json({ message: 'Nhập nội dung bài đọc để học viên có thể học' });
         if (contentType === 'video' && !String(videoUrl || '').trim()) return res.status(400).json({ message: 'Nhập URL video' });
         if (contentType === 'pdf' && !String(pdfUrl || '').trim()) return res.status(400).json({ message: 'Nhập URL tài liệu PDF' });
         if (req.params.lessonId && !mongoose.Types.ObjectId.isValid(req.params.lessonId)) return res.status(400).json({ message: 'Mã bài giảng không hợp lệ' });
@@ -72,7 +73,7 @@ const saveLesson = async (req, res) => {
             { $setOnInsert: { courseId: course._id, title: sectionTitle } },
             { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },
         );
-        const values = { courseId: course._id, sectionId: sectionRecord._id, title: String(title).trim(), section: sectionTitle, contentType, textContent, videoUrl, pdfUrl, order: Math.max(0, Number(order) || 0) };
+        const values = { courseId: course._id, sectionId: sectionRecord._id, title: String(title).trim(), section: sectionTitle, contentType, textContent, videoUrl, pdfUrl, durationMinutes: Math.max(0, Number(durationMinutes) || 0), order: Math.max(0, Number(order) || 0) };
         const lesson = req.params.lessonId
             ? await Lesson.findOneAndUpdate({ _id: req.params.lessonId, courseId: course._id }, values, { new: true, runValidators: true })
             : await Lesson.create(values);

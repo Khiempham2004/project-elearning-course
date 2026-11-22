@@ -16,7 +16,17 @@
     </div>
   }
 
-  @if (lessons().length) {
+  @if (lessons().length && courseComplete()) {
+    <section class="course-completion" role="status">
+      <span aria-hidden="true">✓</span>
+      <p class="eyebrow">ĐÃ HOÀN THÀNH</p>
+      <h1>Chúc mừng bạn!</h1>
+      <p>Bạn đã hoàn thành tất cả bài học trong khóa học này.</p>
+      <a routerLink="/student/courses">Quay lại khóa học của tôi</a>
+    </section>
+  }
+
+  @if (lessons().length && !courseComplete()) {
     <header class="workspace-header">
       <p class="eyebrow">KHÔNG GIAN HỌC TẬP</p>
       <h1>{{ selected()?.title }}</h1>
@@ -24,6 +34,9 @@
         <span [style.width.%]="enrollment()?.progress || 0"></span>
       </div>
       <small>Tiến độ khóa học: {{ enrollment()?.progress || 0 }}%</small>
+      @if (courseComplete()) {
+        <p class="course-complete" role="status">Chúc mừng! Bạn đã hoàn thành khóa học này.</p>
+      }
     </header>
 
     <div class="learning-layout">

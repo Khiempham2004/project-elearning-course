@@ -71,10 +71,6 @@ export class CourseStudentComponent implements OnInit {
   }
 
   enroll(course: StudentCourse): void {
-    if (course.price > 0) {
-      this.error.set('Khóa học có phí chưa được kết nối cổng thanh toán.');
-      return;
-    }
     const courseId = course.id;
     this.enrolling.set(courseId);
     this.learningService.enroll(courseId).subscribe({

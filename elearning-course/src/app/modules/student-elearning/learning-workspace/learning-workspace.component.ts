@@ -19,6 +19,7 @@ export class LearningWorkspaceComponent implements OnInit {
   readonly enrollment = signal<any>(null);
   readonly selected = signal<CourseLesson | null>(null);
   readonly saving = signal(false);
+  readonly courseComplete = signal(false);
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -37,6 +38,9 @@ export class LearningWorkspaceComponent implements OnInit {
       next: ({ data }) => {
         this.lessons.set(data.lessons);
         this.enrollment.set(data.enrollment);
+        this.courseComplete.set(
+          data.enrollment?.status === 'completed' || data.enrollment?.progress >= 100,
+        );
         const lastLessonId = data.enrollment?.lastLessonId;
         const lastLesson = data.lessons.find(
           (lesson) => lesson._id === lastLessonId,
@@ -88,6 +92,11 @@ export class LearningWorkspaceComponent implements OnInit {
       next: ({ data }) => {
         this.enrollment.set(data);
         this.saving.set(false);
+        if (data?.status === 'completed' || data?.progress >= 100) {
+          this.courseComplete.set(true);
+        } else {
+          this.move(1);
+        }
       },
       error: (error) => {
         this.error.set(error?.error?.message ?? 'Không lưu được tiến độ.');

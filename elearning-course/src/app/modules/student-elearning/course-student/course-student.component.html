@@ -86,7 +86,7 @@
               <span></span>{{ course.status }}
             </div>
             <h3>{{ course.title }}</h3>
-            <a class="course-learning-link" [routerLink]="['/student/courses', course.id]">Xem chi tiết khóa học →</a>
+            <a class="course-learning-link" [routerLink]="['/courses', course.id]">Xem chi tiết khóa học →</a>
             <p class="course-description">{{ course.description }}</p>
             <div class="instructor-row">
               <span class="teacher-avatar">{{ course.instructor.charAt(0) }}</span>
@@ -97,10 +97,14 @@
             @if (course.enrollmentStatus) {
               <div class="progress-heading"><span>Tiến độ học</span><strong>{{ course.progress }}%</strong></div>
               <div class="progress-track"><span [style.width.%]="course.progress"></span></div>
-              <a class="course-learning-link" [routerLink]="['/student/learn', course.id]">{{ course.progress > 0 ? 'Tiếp tục học →' : 'Bắt đầu học →' }}</a>
+              @if (course.enrollmentStatus === 'completed' || course.progress >= 100) {
+                <span class="course-completed-label">✓ Đã hoàn thành khóa học</span>
+              } @else {
+                <a class="course-learning-link" [routerLink]="['/student/learn', course.id]">{{ course.progress > 0 ? 'Tiếp tục học →' : 'Bắt đầu học →' }}</a>
+              }
             } @else {
-              <button type="button" (click)="enroll(course)" [disabled]="!!enrolling() || course.price > 0">
-                {{ enrolling() === course.id ? 'Đang đăng ký...' : course.price > 0 ? 'Cần thanh toán' : 'Đăng ký & bắt đầu học' }}
+              <button type="button" (click)="enroll(course)" [disabled]="!!enrolling()">
+                {{ enrolling() === course.id ? 'Đang đăng ký...' : 'Đăng ký & bắt đầu học' }}
               </button>
             }
           </div>

@@ -6,6 +6,7 @@ const lessonSchema = new mongoose.Schema({
     section: { type: String, required: true, trim: true, default: 'Chương 1' },
     title: { type: String, required: true, trim: true },
     contentType: { type: String, enum: ['text', 'video', 'pdf'], default: 'text' },
+    durationMinutes: { type: Number, min: 0, default: 0 },
     textContent: { type: String, default: '' },
     videoUrl: { type: String, default: '' },
     pdfUrl: { type: String, default: '' },

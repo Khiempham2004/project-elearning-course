@@ -1,0 +1,44 @@
+<section class="curriculum">
+  <header class="heading">
+    <div>
+      <p class="kicker">LỘ TRÌNH HỌC TẬP</p>
+      <h2>Course Curriculum</h2>
+    </div>
+    <span class="count">{{ sectionCount }} chương · {{ lessonCount }} nội dung</span>
+  </header>
+  @if (!sections.length) {
+    <div class="empty">
+      <strong>Chương trình đang được chuẩn bị</strong>
+      <p>Giảng viên chưa đăng nội dung cho khóa học này.</p>
+    </div>
+  } @else {
+    @for (section of sections; track section._id) {
+      <article class="section">
+        <button
+          class="section-toggle"
+          type="button"
+          [attr.aria-expanded]="isOpen(section._id)"
+          (click)="toggle(section._id)"
+        >
+          <span class="chevron" [class.open]="isOpen(section._id)" aria-hidden="true">⌄</span>
+          <span class="section-title">{{ section.title }}</span>
+          <small>{{ section.lessons.length }} bài học</small>
+        </button>
+        @if (isOpen(section._id)) {
+          @if (section.lessons.length) {
+            @for (lesson of section.lessons; track lesson._id) {
+              <div class="lesson-row">
+                <span class="type-icon" [class.quiz]="lesson.contentType === 'quiz'">{{ typeIcon(lesson.contentType) }}</span>
+                <span class="lesson-title">{{ lesson.title }}</span>
+                <span class="lesson-type">{{ typeLabel(lesson.contentType) }}</span>
+                <span class="duration">{{ formatDuration(lesson.durationMinutes) }}</span>
+              </div>
+            }
+          } @else {
+            <p class="section-empty">Chương này chưa có bài học.</p>
+          }
+        }
+      </article>
+    }
+  }
+</section>

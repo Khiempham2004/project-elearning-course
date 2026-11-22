@@ -1,76 +1,46 @@
-<section class="detail">
+<main class="detail-page">
   <a class="back-link" routerLink="/student/courses"><span aria-hidden="true">←</span> Danh mục khóa học</a>
 
   @if (loading()) {
-    <p>Đang tải thông tin khóa học...</p>
-  }
-  @if (error()) {
-    <p class="error-message" role="alert">{{ error() }}</p>
-  }
-  @if (notice()) {
-    <p class="success-message" role="status">{{ notice() }}</p>
-  }
+    <section class="state-card" aria-live="polite"><span class="loader" aria-hidden="true"></span><p>Đang tải thông tin khóa học...</p></section>
+  } @else if (error() && !course()) {
+    <section class="state-card error-state" role="alert"><span aria-hidden="true">!</span><h1>Không thể mở khóa học</h1><p>{{ error() }}</p><a routerLink="/student/courses">Quay lại danh mục</a></section>
+  } @else {
+    @if (course(); as course) {
+    @if (error()) { <p class="error-message" role="alert">{{ error() }}</p> }
+    @if (notice()) { <p class="success-message" role="status">{{ notice() }}</p> }
 
-  @if (course(); as course) {
+    @if (!approved()) {
+      <section class="approval-notice" role="status"><strong>Khóa học chưa được Admin duyệt</strong><p>Thông tin khóa học được hiển thị để bạn tham khảo. Bạn có thể đăng ký sau khi khóa học được duyệt.</p></section>
+    }
+
     <header class="course-header">
       <div class="hero-copy">
-        <div class="course-tags">
-          <span class="tag category-tag">{{ course.category || 'Khóa học' }}</span>
-          <span class="tag">{{ levelLabel(course.level) }}</span>
-        </div>
+        <div class="course-tags"><span class="tag category-tag">{{ course.category || course.categoryId?.name || 'Chưa phân loại' }}</span><span class="tag">{{ levelLabel(course.level) }}</span></div>
         <h1>{{ course.courseName }}</h1>
-        <p class="description">
-          {{ course.description || 'Chương trình học trực tuyến cùng giảng viên.' }}
-        </p>
-        <div class="teacher-line"><span class="teacher-avatar">{{ (course.teacherName || 'G').charAt(0) }}</span>
-          <span><small>Giảng viên phụ trách</small><strong>{{ course.teacherName || 'Chưa cập nhật' }}</strong></span>
-        </div>
+        <p class="description">{{ course.description || 'Chưa có mô tả cho khóa học này.' }}</p>
+        <div class="teacher-line"><span class="teacher-avatar">{{ (course.teacherName || course.teacherProfileId?.fullName || 'G').charAt(0) }}</span><span><small>Giảng viên phụ trách</small><strong>{{ course.teacherName || course.teacherProfileId?.fullName || 'Chưa cập nhật' }}</strong></span></div>
       </div>
-      <div class="course-summary">
-        <div class="summary-item"><small>Học phí</small><strong>{{ course.price ? (formatPrice(course.price) + ' ₫') : 'Miễn phí' }}</strong></div>
-        <div class="summary-item"><small>Nội dung</small><strong>{{ lessons().length }} bài học</strong></div>
-        <div class="summary-item"><small>Thời lượng</small><strong>{{ course.duration || '—' }} giờ</strong></div>
-        <div class="summary-item"><small>Học viên</small><strong>{{ course.enrolledCount || 0 }}</strong></div>
-
-        @if (enrollment() && lessons().length) {
-          <a class="action" [routerLink]="['/student/learn', course._id]">
-            {{ enrollment().progress > 0 ? 'Tiếp tục học' : 'Bắt đầu học' }} <span aria-hidden="true">→</span>
-          </a>
-        } @else if (enrollment()) {
-          <button class="action disabled-action" type="button" disabled>Giảng viên đang chuẩn bị bài học</button>
+      <aside class="course-summary" aria-label="Tóm tắt khóa học">
+        <div class="summary-item"><small>Số chương</small><strong>{{ counts().sections }}</strong></div>
+        <div class="summary-item"><small>Số bài học</small><strong>{{ counts().lessons }}</strong></div>
+        <div class="summary-item"><small>Tổng thời lượng</small><strong>{{ formatDuration(counts().durationMinutes) }}</strong></div>
+        <div class="summary-item"><small>Thời lượng khóa học</small><strong>{{ course.duration ? course.duration + ' giờ' : 'Chưa cập nhật' }}</strong></div>
+        @if (enrollment(); as enrolled) {
+          <div class="progress-block"><div><small>Tiến độ học tập</small><strong>{{ enrolled.progress || 0 }}%</strong></div><span class="progress-track"><i [style.width.%]="enrolled.progress || 0"></i></span></div>
+          <a class="action" [routerLink]="['/student/learn', course._id]">Continue Learning <span aria-hidden="true">→</span></a>
+        } @else if (approved()) {
+          <button class="action" type="button" (click)="enroll()" [disabled]="enrolling()">{{ enrolling() ? 'Đang đăng ký...' : 'Enroll Now' }}</button>
         } @else {
-          <button class="action" type="button" (click)="enroll()" [disabled]="enrolling() || !!course.price">
-            {{ enrolling() ? 'Đang đăng ký...' : (course.price ? 'Cần thanh toán' : 'Đăng ký khóa học') }}
-          </button>
+          <button class="action disabled-action" type="button" disabled>Chưa thể đăng ký</button>
         }
-        @if (course.price && !enrollment()) {
-          <small class="payment-note">Khóa học có phí; thanh toán chưa được tích hợp.</small>
-        }
-      </div>
+      </aside>
     </header>
 
-    <section class="curriculum">
-      <div class="section-heading">
-      <div >
-        <p class="section-kicker">LỘ TRÌNH HỌC TẬP</p>
-        <br>
-        <h2>Chương trình học</h2>
-      </div>
-        <span class="lesson-count">{{ lessons().length }} bài học</span>
-      </div>
-      @for (lesson of lessons(); track lesson._id) {
-        <article class="lesson-row">
-          <span class="lesson-icon">{{ lesson.contentType === 'video' ? '▶' : lesson.contentType === 'pdf' ? '▤' : 'Aa' }}</span>
-          <span class="lesson-copy"><strong>{{ lesson.title }}</strong><small>{{ lesson.section }} · {{ lesson.contentType === 'video' ? 'Video' : lesson.contentType === 'pdf' ? 'Tài liệu PDF' : 'Bài đọc' }}</small></span>
-          @if (enrollment()) { 
-            <span class="lesson-lock">Nội dung khóa học</span> 
-          } @else { 
-            <span class="lesson-lock">Đăng ký để học</span> 
-          }
-        </article>
-      } @empty {
-        <div class="empty-curriculum"><span aria-hidden="true">▤</span><div><strong>Chương trình đang được chuẩn bị</strong><p>Giảng viên chưa đăng bài học. Bạn có thể quay lại sau để bắt đầu học.</p></div></div>
-      }
-    </section>
+    <div class="detail-grid">
+      <app-course-info [course]="course" />
+      <app-course-curriculum [sections]="curriculum()" />
+    </div>
+    }
   }
-</section>
+</main>

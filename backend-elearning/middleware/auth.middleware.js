@@ -13,7 +13,6 @@ const verifyToken = async (req, res, next) => {
         const token = authHeader.split(" ")[1];
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
         const user = await Auth.findById(decoded.id).select("-password");
 
         if (!user) {
@@ -31,17 +30,26 @@ const verifyToken = async (req, res, next) => {
         req.user = user;
         return next();
     } catch (error) {
-        console.error("Lỗi verifyToken:", error);
+        if (error.name === "TokenExpiredError") {
+            return res.status(401).json({
+                success: false,
+                code: "TOKEN_EXPIRED",
+                message: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+            });
+        }
+        console.error("Lỗi verifyToken:", error.message);
         if (
             error.name === "JsonWebTokenError" ||
-            error.name === "TokenExpiredError" ||
             error.name === "NotBeforeError"
         ) {
             return res.status(401).json({
+                success: false,
+                code: "INVALID_TOKEN",
                 message: "Token không hợp lệ hoặc đã hết hạn",
             });
         }
         return res.status(500).json({
+            success : false,
             message: "Lỗi máy chủ khi xác thực tài khoản",
         });
     }

@@ -161,3 +161,20 @@
     flex-direction: column;
   }
 }
+
+.pagination-wrapper{
+  display: flex;
+  text-align: center;
+  justify-content: space-between;
+}
+.pagination-footer{
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+::ng-deep .ant-select-selector{
+  border-radius: 8px !important;
+}
+::ng-deep .ant-pagination-item{
+  border-radius: 8px !important;
+}

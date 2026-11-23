@@ -1,9 +1,10 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   CourseLesson,
   StudentLearningService,
 } from '../../../core/services/student-learning.service';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Component({
   selector: 'app-learning-workspace',
@@ -13,6 +14,7 @@ import {
   styleUrl: './learning-workspace.component.css',
 })
 export class LearningWorkspaceComponent implements OnInit {
+  private message = inject(NzMessageService);
   readonly loading = signal(true);
   readonly error = signal('');
   readonly lessons = signal<CourseLesson[]>([]);
@@ -39,7 +41,8 @@ export class LearningWorkspaceComponent implements OnInit {
         this.lessons.set(data.lessons);
         this.enrollment.set(data.enrollment);
         this.courseComplete.set(
-          data.enrollment?.status === 'completed' || data.enrollment?.progress >= 100,
+          data.enrollment?.status === 'completed' ||
+            data.enrollment?.progress >= 100,
         );
         const lastLessonId = data.enrollment?.lastLessonId;
         const lastLesson = data.lessons.find(
@@ -66,6 +69,12 @@ export class LearningWorkspaceComponent implements OnInit {
   }
 
   select(lesson: CourseLesson): void {
+    if (!this.canAccessLesson(lesson)) {
+      this.message.warning(
+        'Bạn cần hoàn thành bài học trước đó để mở khóa bài học tiếp theo!',
+      );
+      return;
+    }
     this.selected.set(lesson);
     const enrollment = this.enrollment();
     if (enrollment) this.rememberLesson(enrollment._id, lesson._id);
@@ -73,12 +82,15 @@ export class LearningWorkspaceComponent implements OnInit {
 
   move(offset: number): void {
     const lesson = this.lessons()[this.index() + offset];
-    if (lesson) this.select(lesson);
+    this.select(lesson);
   }
 
   isDone(lesson: CourseLesson | null): boolean {
-    return !!lesson && !!this.enrollment()?.completedLessonIds?.some(
-      (id: string) => String(id) === lesson._id,
+    return (
+      !!lesson &&
+      !!this.enrollment()?.completedLessonIds?.some(
+        (id: string) => String(id) === lesson._id,
+      )
     );
   }
 
@@ -114,5 +126,17 @@ export class LearningWorkspaceComponent implements OnInit {
         );
       },
     });
+  }
+
+  canAccessLesson(lesson: CourseLesson): boolean {
+    const lessons = this.lessons();
+    const currentIndex = lessons.findIndex((item) => item._id === lesson._id);
+    if (currentIndex === -1) return false;
+    // Bài đầu tiên luôn được phép học
+    if (currentIndex === 0) return true;
+    // Phải hoàn thành bài học ngay trước đó
+    const previousLesson = lessons[currentIndex - 1];
+
+    return this.isDone(previousLesson);
   }
 }

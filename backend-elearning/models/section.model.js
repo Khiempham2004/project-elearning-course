@@ -9,7 +9,7 @@ const sectionSchema = new mongoose.Schema(
     },
     title: { type: String, required: true, trim: true, maxlength: 120 },
     description: { type: String, trim: true, default: "", maxlength: 1000 },
-    order: { type: Number, min: 0, default: 0 },
+    order: { type: Number, min: 0, default: 1 },
     status: {
       type: String,
       enum: ["published", "draft"],

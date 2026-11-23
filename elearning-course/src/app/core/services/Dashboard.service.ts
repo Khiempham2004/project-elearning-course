@@ -3,10 +3,29 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 export interface AdminDashboardData {
-  totals: { students: number; teachers: number; courses: number; enrollments: number; pendingCourses: number };
-  studentTrend: Array<{ year: number; month: number; label: string; count: number }>;
+  totals: {
+    students: number;
+    teachers: number;
+    courses: number;
+    enrollments: number;
+    pendingCourses: number;
+  };
+  studentTrend: Array<{
+    year: number;
+    month: number;
+    label: string;
+    count: number;
+  }>;
   enrollmentStatuses: Record<string, number>;
-  latestCourses: Array<{ _id: string; courseCode: string; courseName: string; teacherName?: string; createdAt: string; status: boolean; approvalStatus?: string }>;
+  latestCourses: Array<{
+    _id: string;
+    courseCode: string;
+    courseName: string;
+    teacherName?: string;
+    createdAt: string;
+    status: boolean;
+    approvalStatus?: string;
+  }>;
   revenue: null | { total: number };
 }
 

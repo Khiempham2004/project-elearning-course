@@ -1,6 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import {
+  AuthResponse,
+  AuthUser,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
+  UserRole,
+} from '../../models/auth.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -10,44 +17,52 @@ export class AuthService {
   private readonly apiAuth = 'http://localhost:3001/api/auth';
 
   register(params: any): Observable<any> {
-    return this.http.post<any>(`${this.apiAuth}/register`, params);
+    return this.http.post<AuthResponse>(`${this.apiAuth}/register`, params);
   }
 
   login(params: any): Observable<any> {
-    return this.http.post<any>(`${this.apiAuth}/login`, params);
+    return this.http.post<AuthResponse>(`${this.apiAuth}/login`, params);
   }
 
   getProfile(): Observable<any> {
-    return this.http.get<any>(`${this.apiAuth}/me`);
+    return this.http.get<AuthUser>(`${this.apiAuth}/me`);
   }
 
-  updateProfile(params: {
-    userName: string;
-    email: string;
-    avatarUrl?: string;
-    currentPassword?: string;
-    newPassword?: string;
-  }): Observable<any> {
-    return this.http.put<any>(`${this.apiAuth}/me`, params);
+  updateProfile(
+    params: UpdateProfileRequest,
+  ): Observable<UpdateProfileResponse> {
+    return this.http.put<UpdateProfileResponse>(`${this.apiAuth}/me`, params);
   }
 
-  saveLoginData(res: any) {
+  saveLoginData(res: AuthResponse) {
     if (typeof res?.token !== 'string' || !res.token) {
       throw new Error('Phản hồi đăng nhập không có token hợp lệ');
     }
     localStorage.setItem('token', res.token);
     localStorage.setItem('user', JSON.stringify(res.user));
-    const identity = String(res.user?.id ?? res.user?._id ?? res.user?.userName ?? 'account');
+    const identity = String(
+      res.user?.id ?? res.user?._id ?? res.user?.userName ?? 'account',
+    );
     const roleLabels: Record<string, string> = {
-      admin: 'Quản trị viên', teacher: 'Giảng viên', student: 'Học viên',
-      directory: 'Quản lý danh mục', course: 'Quản lý khóa học',
+      admin: 'Quản trị viên',
+      teacher: 'Giảng viên',
+      student: 'Học viên',
+      directory: 'Quản lý danh mục',
+      course: 'Quản lý khóa học',
     };
     const key = `notifications-${identity}`;
-    let notifications: Array<{ id: string; message: string; createdAt: string; read: boolean }> = [];
+    let notifications: Array<{
+      id: string;
+      message: string;
+      createdAt: string;
+      read: boolean;
+    }> = [];
     try {
       notifications = JSON.parse(localStorage.getItem(key) ?? '[]');
       if (!Array.isArray(notifications)) notifications = [];
-    } catch { notifications = []; }
+    } catch {
+      notifications = [];
+    }
     notifications.unshift({
       id: `login-${Date.now()}`,
       message: `Đăng nhập thành công với vai trò ${roleLabels[res.user?.role] ?? res.user?.role ?? 'người dùng'}.`,
@@ -60,7 +75,7 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
-  getHomeForRole(role: string | null): string {
+  getHomeForRole(role: UserRole | null): string {
     switch (role) {
       case 'admin':
         return '/admin';
@@ -76,7 +91,7 @@ export class AuthService {
         return '/login';
     }
   }
-  getUserRole(): string | null {
+  getUserRole(): UserRole | null {
     const user = localStorage.getItem('user');
     if (!user) {
       return null;

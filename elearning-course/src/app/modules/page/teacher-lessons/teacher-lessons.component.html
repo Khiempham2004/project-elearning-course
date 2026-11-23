@@ -7,13 +7,21 @@
         Chia nội dung theo chương, sắp xếp bài học và thêm video, PDF hoặc văn
         bản.
       </p>
-      <div class="publishing-steps"><strong>Để học viên học được:</strong><span>1. Chọn khóa học của bạn</span><span>2. Thêm bài giảng</span><span>3. Admin duyệt khóa học · học viên đăng ký</span></div>
+      <div class="publishing-steps">
+        <strong>Để học viên học được:</strong><span>1. Chọn khóa học của bạn</span><span>2. Thêm bài
+          giảng</span><span>3. Admin duyệt khóa học · học viên đăng ký</span>
+      </div>
     </div>
   </header>
   @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
-  @if (error().toLowerCase().includes('hồ sơ giảng viên')) {
-    <div class="profile-help">Yêu cầu admin vào <strong>Quản lý giảng viên</strong>, tạo/cập nhật hồ sơ có email trùng email tài khoản teacher hoặc teacherCode trùng tên đăng nhập / ID tài khoản, rồi bật trạng thái hoạt động. Tải lại trang này sau khi admin lưu hồ sơ.</div>
+  @if (error().toLowerCase().includes("hồ sơ giảng viên")) {
+  <div class="profile-help">
+    Yêu cầu admin vào <strong>Quản lý giảng viên</strong>, tạo/cập nhật hồ
+    sơ có email trùng email tài khoản teacher hoặc teacherCode trùng tên
+    đăng nhập / ID tài khoản, rồi bật trạng thái hoạt động. Tải lại trang
+    này sau khi admin lưu hồ sơ.
+  </div>
   }
   }
   @if (notice()) {
@@ -21,21 +29,35 @@
   }
   <label class="course-picker">Khóa học<select [ngModel]="courseId()" (ngModelChange)="selectCourse($event)">
       <option value="">Chọn khóa học</option>
-      @if (courseLoading()) { <option disabled>Đang tải khóa học...</option> }
+      @if (courseLoading()) {
+      <option disabled>Đang tải khóa học...</option>
+      }
       @for (course of courses(); track course._id) {
       <option [value]="course._id">
-        {{ course.courseCode }} · {{ course.courseName }}{{ course.approvalStatus === 'approved' ? ' · Đã duyệt' : ' · Chờ admin duyệt' }}
+        {{ course.courseCode }} · {{ course.courseName
+        }}{{
+        course.approvalStatus === "approved"
+        ? " · Đã duyệt"
+        : " · Chờ admin duyệt"
+        }}
       </option>
       }
     </select></label>
   @if (!courseLoading() && !error() && courses().length === 0) {
-    <div class="empty-course"><strong>Bạn chưa có khóa học để thêm bài giảng.</strong><p>Tạo khóa học trước, sau đó quay lại đây để thêm nội dung học.</p><a routerLink="/teacher/courses">Mở khóa học của tôi →</a></div>
+  <div class="empty-course">
+    <strong>Bạn chưa có khóa học để thêm bài giảng.</strong>
+    <p>Tạo khóa học trước, sau đó quay lại đây để thêm nội dung học.</p>
+    <a routerLink="/teacher/courses">Mở khóa học của tôi →</a>
+  </div>
   }
   @if (courseId()) {
   @if (selectedCourse(); as selected) {
-    @if (selected.approvalStatus !== 'approved') {
-      <p class="approval-note">Bạn có thể soạn bài giảng trong lúc chờ duyệt. Học viên chỉ thấy khóa học sau khi admin duyệt và mở khóa.</p>
-    }
+  @if (selected.approvalStatus !== "approved") {
+  <p class="approval-note">
+    Bạn có thể soạn bài giảng trong lúc chờ duyệt. Học viên chỉ thấy khóa
+    học sau khi admin duyệt và mở khóa.
+  </p>
+  }
   }
   <section class="editor">
     <h2>{{ editingId ? "Chỉnh sửa bài giảng" : "Thêm bài giảng" }}</h2>
@@ -46,16 +68,22 @@
           <option value="text">Văn bản</option>
           <option value="video">Video URL</option>
           <option value="pdf">Tài liệu PDF</option>
-        </select></label><label>Thứ tự<input type="number" min="0" [(ngModel)]="form.order" /></label>
+        </select></label><label>Thứ tự bài giảng<input type="number" min="1" step="1" [(ngModel)]="form.order" /></label>
       @if (form.contentType === "text") {
-      <label class="wide">Nội dung<textarea rows="6" [(ngModel)]="form.textContent" placeholder="Nhập nội dung bài học mà học viên sẽ đọc..."></textarea>
+      <label class="wide">Nội dung<textarea rows="6" [(ngModel)]="form.textContent"
+          placeholder="Nhập nội dung bài học mà học viên sẽ đọc..."></textarea>
       </label>
       }
       @if (form.contentType === "video") {
-      <label class="wide">Video URL<input type="url" [(ngModel)]="form.videoUrl" placeholder="https://... (đường dẫn video MP4/WebM trực tiếp)" /><small>Student xem trực tiếp được video có URL phát MP4 hoặc WebM.</small></label>
+      <label class="wide">Video URL<input type="url" [(ngModel)]="form.videoUrl"
+          placeholder="https://... (đường dẫn video MP4/WebM trực tiếp)" /><small>Student xem trực tiếp được video có
+          URL phát MP4 hoặc
+          WebM.</small></label>
       }
       @if (form.contentType === "pdf") {
-      <label class="wide">PDF URL<input type="url" [(ngModel)]="form.pdfUrl" placeholder="https://... (đường dẫn PDF có thể truy cập)" /><small>Đảm bảo học viên có quyền mở đường dẫn tài liệu.</small></label>
+      <label class="wide">PDF URL<input type="url" [(ngModel)]="form.pdfUrl"
+          placeholder="https://... (đường dẫn PDF có thể truy cập)" /><small>Đảm bảo học viên có quyền mở đường dẫn tài
+          liệu.</small></label>
       }
     </div>
     <div class="actions">
@@ -102,5 +130,17 @@
     }
     }
   </section>
+  @if (total()) {
+    <div class="pagination-wrapper">
+      <div>
+        <div>Tổng số : <span style="font-weight: 600;">{{total()}}</span> khóa học</div>
+      </div>
+      <div class="pagination-footer">
+        <nz-select [nzOptions]="optionSelect" (ngModelChange)="changePageSize($event)" [ngModel]="limit()"/>
+        <nz-pagination [nzPageIndex]="page()" [nzPageSize]="limit()" [nzTotal]="total()"
+      (nzPageIndexChange)="changePage($event)" (nzPageSizeChange)="changePageSize($event)" />
+      </div>
+  </div>
+}
   }
 </main>

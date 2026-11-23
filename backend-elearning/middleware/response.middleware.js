@@ -6,8 +6,8 @@ const standardizeResponse = (req, res, next) => {
     return originalJson({
       ...body,
       success: body.success ?? (res.statusCode < 400),
-      data: body.data ?? result?.data,
-      pagination: body.pagination ?? result?.pagination,
+      // data: body.data ?? result?.data,
+      // pagination: body.pagination ?? result?.pagination,
     });
   };
   next();

@@ -21,14 +21,16 @@ const getAllStudents = async (req, res) => {
             StudentModel.countDocuments(filter),
         ]);
         return res.status(200).json({
-            data: students,
-            pagination: {
-                page,
-                limit,
-                totalStudents,
-                totalPages: Math.ceil(totalStudents / limit),
-            },
-            message: 'Lấy danh sách học sinh thành công',
+            result : {
+                data: students,
+                pagination: {
+                    page,
+                    limit,
+                    totalStudents,
+                    totalPages: Math.ceil(totalStudents / limit),
+                },
+                message: 'Lấy danh sách học sinh thành công',
+            }
         });
     } catch (error) {
         console.error(error);

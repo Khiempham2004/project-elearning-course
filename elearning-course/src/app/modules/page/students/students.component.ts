@@ -21,6 +21,7 @@ import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { StudentsService } from '../../../core/services/students.service';
 import { NzDatePickerComponent } from 'ng-zorro-antd/date-picker';
+import { StudentListResponse, StudentListResult } from '../../../models/student.model';
 
 @Component({
   selector: 'app-students',
@@ -130,12 +131,11 @@ export class StudentsComponent implements OnInit {
     this.studentService
       .getAllStudents(this.filterSearch, this.page, this.pageSize)
       .subscribe({
-        next: (res: any) => {
-          this.students = res?.data || [];
+        next: (res: StudentListResponse) => {
+          const result = res.result ?? 0;
+          this.students = result.data || [];
           this.listOfStudent = [...this.students];
-          console.log(this.listOfStudent);
-
-          this.total = res?.pagination?.totalStudents;
+          this.total = result.pagination.totalStudents ?? 0; 
         },
       });
   }

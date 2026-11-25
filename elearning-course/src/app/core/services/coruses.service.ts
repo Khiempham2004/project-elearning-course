@@ -1,70 +1,70 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
+import { Course, CourseCategory, CourseListResponse, CourseReviewRequest, CourseReviewResponse, CreateCourseRequest, UpdateCourseRequest } from '../../models/course.model';
+import { CreateLessonRequest, Lesson, LessonDeleteResponse, LessonListResponse, LessonSaveResponse, UpdateLessonRequest } from '../../models/lesson.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CorusesService {
   constructor(private http: HttpClient) {}
-  // private readonly coursesApi = 'http://localhost:9000/courses';
   private readonly apiCourse = 'http://localhost:3001/api/course';
 
   getAllCourses(
     keyword: string = '',
     page: number = 1,
     pageSize: number = 10,
-  ): Observable<any> {
+  ): Observable<CourseListResponse> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('limit', pageSize.toString());
     if (keyword.trim()) {
       params = params.set('q', keyword.trim());
     }
-    return this.http.get<any[]>(this.apiCourse, { params });
+    return this.http.get<CourseListResponse>(this.apiCourse, { params });
   }
 
-  getCourseById(id: any): Observable<any> {
-    return this.http.get<any>(`${this.apiCourse}/${id}`);
+  getCourseById(id: any): Observable<Course> {
+    return this.http.get<Course>(`${this.apiCourse}/${id}`);
   }
 
-  createCourse(data: any): Observable<any> {
-    return this.http.post<any[]>(this.apiCourse, data);
+  createCourse(data: CreateCourseRequest): Observable<Course[]> {
+    return this.http.post<Course[]>(this.apiCourse, data);
   }
 
-  putCourse(id: any, data: any): Observable<any> {
-    return this.http.put<any>(`${this.apiCourse}/${id}`, data);
+  putCourse(id: string, data: UpdateCourseRequest): Observable<Course> {
+    return this.http.put<Course>(`${this.apiCourse}/${id}`, data);
   }
 
-  deleteCourse(id: any): Observable<any> {
+  deleteCourse(id: string): Observable<any> {
     return this.http.delete<any>(`${this.apiCourse}/${id}`);
   }
 
   reviewCourse(
     id: string,
     approvalStatus: 'approved' | 'rejected',
-  ): Observable<any> {
-    return this.http.patch<any>(`${this.apiCourse}/${id}/review`, {
+  ): Observable<CourseReviewResponse> {
+    const payload :CourseReviewRequest = {
       approvalStatus,
-    });
+    };
+    return this.http.patch<CourseReviewResponse>(`${this.apiCourse}/${id}/review`, payload);
   }
 
-  getCategories(): Observable<any> {
-    return this.http.get<any>(`${this.apiCourse}/categories?activeOnly=true`);
+  getCategories(): Observable<CourseCategory[]> {
+    return this.http.get<CourseCategory[]>(`${this.apiCourse}/categories?activeOnly=true`);
   }
 
-  getLessons(courseId: string ,page : number = 1 , limit : number = 10): Observable<any> {
-    return this.http.get<any>(`${this.apiCourse}/${courseId}/lessons` , {
+  getLessons(courseId: string ,page : number = 1 , limit : number = 10): Observable<LessonListResponse> {
+    return this.http.get<LessonListResponse>(`${this.apiCourse}/${courseId}/lessons` , {
       params : {
         page : page.toString(),
         limit : limit.toString()
       }
-    }).pipe(
-      map(res => res.result)
-    );
+    })
   }
-  createLesson(courseId: string, payload: any): Observable<any> {
-    return this.http.post<any>(
+  createLesson(courseId: string, payload: CreateLessonRequest): Observable<LessonSaveResponse> {
+    return this.http.post<LessonSaveResponse>(
       `${this.apiCourse}/${courseId}/lessons`,
       payload,
     );
@@ -72,15 +72,15 @@ export class CorusesService {
   updateLesson(
     courseId: string,
     lessonId: string,
-    payload: any,
-  ): Observable<any> {
-    return this.http.put<any>(
+    payload: UpdateLessonRequest,
+  ): Observable<LessonSaveResponse> {
+    return this.http.put<LessonSaveResponse>(
       `${this.apiCourse}/${courseId}/lessons/${lessonId}`,
       payload,
     );
   }
-  deleteLesson(courseId: string, lessonId: string): Observable<any> {
-    return this.http.delete<any>(
+  deleteLesson(courseId: string, lessonId: string): Observable<LessonDeleteResponse> {
+    return this.http.delete<LessonDeleteResponse>(
       `${this.apiCourse}/${courseId}/lessons/${lessonId}`,
     );
   }

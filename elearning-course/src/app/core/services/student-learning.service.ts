@@ -27,8 +27,23 @@ export interface LearningCourse {
   prerequisites?: string[];
 }
 
-export interface CourseLesson { _id: string; section?: string; title: string; contentType: 'text' | 'video' | 'pdf' | 'quiz'; textContent?: string; videoUrl?: string; pdfUrl?: string; order: number; durationMinutes?: number; }
-export interface CourseCurriculumSection { _id: string; title: string; order: number; lessons: CourseLesson[]; }
+export interface CourseLesson {
+  _id: string;
+  section?: string;
+  title: string;
+  contentType: 'text' | 'video' | 'pdf' | 'quiz';
+  textContent?: string;
+  videoUrl?: string;
+  pdfUrl?: string;
+  order: number;
+  durationMinutes?: number;
+}
+export interface CourseCurriculumSection {
+  _id: string;
+  title: string;
+  order: number;
+  lessons: CourseLesson[];
+}
 export interface CourseDetailData {
   course: LearningCourse;
   approved: boolean;
@@ -46,7 +61,11 @@ export interface LearningActivity {
   dueAt?: string | null;
   durationMinutes?: number | null;
   passingScore?: number;
-  questions?: Array<{ prompt: string; options: string[]; correctAnswer?: number }>;
+  questions?: Array<{
+    prompt: string;
+    options: string[];
+    correctAnswer?: number;
+  }>;
   location?: string;
   meetingUrl?: string;
   status?: 'published' | 'draft';
@@ -56,7 +75,12 @@ export interface LearningActivity {
     submittedAt: string;
     score?: number;
     feedback?: string;
-    attempts?: Array<{ answer: string; submittedAt: string; score?: number; feedback?: string }>;
+    attempts?: Array<{
+      answer: string;
+      submittedAt: string;
+      score?: number;
+      feedback?: string;
+    }>;
   } | null;
   submissions?: Array<{
     studentId: { _id: string; userName: string; email: string } | string;
@@ -97,7 +121,11 @@ export interface LearningActivityPayload {
   dueAt?: string | null;
   durationMinutes?: number | null;
   passingScore?: number;
-  questions?: Array<{ prompt: string; options: string[]; correctAnswer: number }>;
+  questions?: Array<{
+    prompt: string;
+    options: string[];
+    correctAnswer: number;
+  }>;
   location?: string;
   meetingUrl?: string;
   status?: 'published' | 'draft';
@@ -117,19 +145,37 @@ export class StudentLearningService {
   }
 
   getCourseDetail(courseId: string): Observable<ApiResponse<CourseDetailData>> {
-    return this.http.get<ApiResponse<CourseDetailData>>(`${this.api}/courses/${courseId}/detail`);
+    return this.http.get<ApiResponse<CourseDetailData>>(
+      `${this.api}/courses/${courseId}/detail`,
+    );
   }
 
-  getCourseLessons(courseId: string): Observable<ApiResponse<{ enrollment: any; lessons: CourseLesson[] }>> {
-    return this.http.get<ApiResponse<{ enrollment: any; lessons: CourseLesson[] }>>(`${this.api}/courses/${courseId}/lessons`);
+  getCourseLessons(
+    courseId: string,
+  ): Observable<ApiResponse<{ enrollment: any; lessons: CourseLesson[] }>> {
+    return this.http.get<
+      ApiResponse<{ enrollment: any; lessons: CourseLesson[] }>
+    >(`${this.api}/courses/${courseId}/lessons`);
   }
 
-  completeLesson(enrollmentId: string, lessonId: string): Observable<{ data: any; message: string }> {
-    return this.http.post<{ data: any; message: string }>(`${this.api}/enrollments/${enrollmentId}/lessons/${lessonId}/complete`, {});
+  completeLesson(
+    enrollmentId: string,
+    lessonId: string,
+  ): Observable<{ data: any; message: string }> {
+    return this.http.post<{ data: any; message: string }>(
+      `${this.api}/enrollments/${enrollmentId}/lessons/${lessonId}/complete`,
+      {},
+    );
   }
 
-  rememberLesson(enrollmentId: string, lessonId: string): Observable<{ data: any }> {
-    return this.http.post<{ data: any }>(`${this.api}/enrollments/${enrollmentId}/lessons/${lessonId}/view`, {});
+  rememberLesson(
+    enrollmentId: string,
+    lessonId: string,
+  ): Observable<{ data: any }> {
+    return this.http.post<{ data: any }>(
+      `${this.api}/enrollments/${enrollmentId}/lessons/${lessonId}/view`,
+      {},
+    );
   }
 
   enroll(courseId: string): Observable<{ message: string }> {
@@ -146,27 +192,85 @@ export class StudentLearningService {
     );
   }
 
-  getManageActivities(): Observable<{ data: { stats: { courseCount: number; approvedCourseCount: number; studentCount: number; lessonCount: number; scheduleCount: number; assignmentCount: number; quizCount: number }; activities: LearningActivity[]; courses: LearningCourse[]; enrollments: ManagedEnrollment[] } }> {
-    return this.http.get<{ data: { stats: { courseCount: number; approvedCourseCount: number; studentCount: number; lessonCount: number; scheduleCount: number; assignmentCount: number; quizCount: number }; activities: LearningActivity[]; courses: LearningCourse[]; enrollments: ManagedEnrollment[] } }>(`${this.api}/activities/manage`);
+  getManageActivities(): Observable<{
+    data: {
+      stats: {
+        courseCount: number;
+        approvedCourseCount: number;
+        studentCount: number;
+        lessonCount: number;
+        scheduleCount: number;
+        assignmentCount: number;
+        quizCount: number;
+      };
+      activities: LearningActivity[];
+      courses: LearningCourse[];
+      enrollments: ManagedEnrollment[];
+    };
+  }> {
+    return this.http.get<{
+      data: {
+        stats: {
+          courseCount: number;
+          approvedCourseCount: number;
+          studentCount: number;
+          lessonCount: number;
+          scheduleCount: number;
+          assignmentCount: number;
+          quizCount: number;
+        };
+        activities: LearningActivity[];
+        courses: LearningCourse[];
+        enrollments: ManagedEnrollment[];
+      };
+    }>(`${this.api}/activities/manage`);
   }
 
-  createActivity(activity: LearningActivityPayload): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.api}/activities`, activity);
+  createActivity(
+    activity: LearningActivityPayload,
+  ): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+      `${this.api}/activities`,
+      activity,
+    );
   }
 
-  updateActivity(activityId: string, activity: LearningActivityPayload): Observable<{ message: string }> {
-    return this.http.put<{ message: string }>(`${this.api}/activities/${activityId}`, activity);
+  updateActivity(
+    activityId: string,
+    activity: LearningActivityPayload,
+  ): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(
+      `${this.api}/activities/${activityId}`,
+      activity,
+    );
   }
 
   deleteActivity(activityId: string): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(`${this.api}/activities/${activityId}`);
+    return this.http.delete<{ message: string }>(
+      `${this.api}/activities/${activityId}`,
+    );
   }
 
-  grade(activityId: string, studentId: string, score: number, feedback: string): Observable<{ message: string }> {
-    return this.http.put<{ message: string }>(`${this.api}/activities/${activityId}/submissions/${studentId}/grade`, { score, feedback });
+  grade(
+    activityId: string,
+    studentId: string,
+    score: number,
+    feedback: string,
+  ): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(
+      `${this.api}/activities/${activityId}/submissions/${studentId}/grade`,
+      { score, feedback },
+    );
   }
 
-  updateProgress(enrollmentId: string, progress: number, completedLessons: number): Observable<{ message: string }> {
-    return this.http.put<{ message: string }>(`${this.api}/enrollments/${enrollmentId}/progress`, { progress, completedLessons });
+  updateProgress(
+    enrollmentId: string,
+    progress: number,
+    completedLessons: number,
+  ): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(
+      `${this.api}/enrollments/${enrollmentId}/progress`,
+      { progress, completedLessons },
+    );
   }
 }

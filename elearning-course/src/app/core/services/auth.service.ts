@@ -7,7 +7,7 @@ import {
   UpdateProfileRequest,
   UpdateProfileResponse,
   UserRole,
-} from '../../models/auth.interface';
+} from '../../models/auth.model';
 
 @Injectable({
   providedIn: 'root',

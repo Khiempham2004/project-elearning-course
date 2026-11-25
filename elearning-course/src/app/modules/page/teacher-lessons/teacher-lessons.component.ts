@@ -20,7 +20,13 @@ interface LessonItem {
 @Component({
   selector: 'app-teacher-lessons',
   standalone: true,
-  imports: [FormsModule, RouterLink, NzPaginationComponent, NzSelectComponent ,NzFormModule],
+  imports: [
+    FormsModule,
+    RouterLink,
+    NzPaginationComponent,
+    NzSelectComponent,
+    NzFormModule,
+  ],
   templateUrl: './teacher-lessons.component.html',
   styleUrl: './teacher-lessons.component.css',
 })
@@ -53,23 +59,23 @@ export class TeacherLessonsComponent implements OnInit {
     });
   }
 
-  changePage(page:any){
+  changePage(page: any) {
     this.page.set(page);
     this.load();
   }
 
-  changePageSize(pagesize : number){
+  changePageSize(pagesize: number) {
     this.limit.set(pagesize);
     this.page.set(1);
     this.load();
   }
 
   optionSelect = [
-    {label : '5',value : 5},
-    {label : '10',value : 10},
-    {label : '15',value : 15},
-    {label : '20',value : 20}
-  ]
+    { label: '5', value: 5 },
+    { label: '10', value: 10 },
+    { label: '15', value: 15 },
+    { label: '20', value: 20 },
+  ];
   private emptyForm() {
     return {
       section: 'Chương 1',
@@ -92,7 +98,7 @@ export class TeacherLessonsComponent implements OnInit {
     this.page.set(1);
     this.total.set(0);
     this.totalPages.set(0);
-    
+
     if (!id) {
       this.lessons.set([]);
       return;
@@ -102,21 +108,23 @@ export class TeacherLessonsComponent implements OnInit {
   load(): void {
     if (!this.courseId()) return;
     this.loading.set(true);
-    this.courseService.getLessons(this.courseId() , this.page() ,this.limit()).subscribe({
-      next: (response) => {
-        this.lessons.set(response?.data ?? []);
-        this.total.set(response?.pagination?.total ?? 0);
-        this.totalPages.set(response?.pagination?.totalPages ?? 0);
+    this.courseService
+      .getLessons(this.courseId(), this.page(), this.limit())
+      .subscribe({
+        next: (response) => {
+          const results = response?.result;
+          this.lessons.set(results.data ?? []);
+          this.total.set(results.pagination.total ?? 0);
+          this.totalPages.set(results?.pagination?.totalPages ?? 0);
 
-        this.page.set(response?.pagination?.total ?? 1);
-        this.totalPages.set(response?.pagination?.totalPages ?? 10);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        this.error.set(error?.error?.message ?? 'Không tải được bài giảng.');
-        this.loading.set(false);
-      },
-    });
+          this.page.set(results.pagination.page ?? 1);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          this.error.set(error?.error?.message ?? 'Không tải được bài giảng.');
+          this.loading.set(false);
+        },
+      });
   }
   save(): void {
     this.error.set('');
@@ -125,11 +133,12 @@ export class TeacherLessonsComponent implements OnInit {
       this.error.set('Chọn khóa học và nhập tên bài giảng.');
       return;
     }
-    if (!Number.isInteger(Number(this.form.order)) || 
-        Number(this.form.order) < 1
-  ) {
-    this.error.set('Thứ tự bài giảng phải là số nguyên lớn hơn hoặc bằng 1.');
-    return;
+    if (
+      !Number.isInteger(Number(this.form.order)) ||
+      Number(this.form.order) < 1
+    ) {
+      this.error.set('Thứ tự bài giảng phải là số nguyên lớn hơn hoặc bằng 1.');
+      return;
     }
     if (this.form.contentType === 'text' && !this.form.textContent.trim()) {
       this.error.set('Nhập nội dung bài đọc để học viên có thể học.');
@@ -158,12 +167,14 @@ export class TeacherLessonsComponent implements OnInit {
         const pending =
           course?.approvalStatus && course.approvalStatus !== 'approved';
         this.notice.set(
-          `${response?.message ?? 'Đã lưu bài giảng.'}${pending ? ' Bài giảng đã lưu; admin cần duyệt khóa học trước khi học viên nhìn thấy.' : ' Học viên đã đăng ký khóa học có thể mở bài trong không gian học tập.'}`,
+          pending
+            ? 'Bài giảng đã lưu; admin cần duyệt khóa học trước khi học viên nhìn thấy.'
+            : response.message,
         );
         this.reset();
         this.load();
       },
-      error: (error) =>
+      error: (error: any) =>
         this.error.set(error?.error?.message ?? 'Không lưu được bài giảng.'),
     });
   }

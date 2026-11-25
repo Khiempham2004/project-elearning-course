@@ -20,26 +20,10 @@ courseRoutes.get(
       ? learning.getCatalog(req, res, next)
       : courses.getAllCourse(req, res, next),
 );
-courseRoutes.get(
-  "/:courseId/lessons",
-  authorize("admin", "teacher"),
-  lessons.listLessons,
-);
-courseRoutes.post(
-  "/:courseId/lessons",
-  authorize("admin", "teacher"),
-  lessons.saveLesson,
-);
-courseRoutes.put(
-  "/:courseId/lessons/:lessonId",
-  authorize("admin", "teacher"),
-  lessons.saveLesson,
-);
-courseRoutes.delete(
-  "/:courseId/lessons/:lessonId",
-  authorize("admin", "teacher"),
-  lessons.deleteLesson,
-);
+courseRoutes.get("/:courseId/lessons", authorize("admin", "teacher"), lessons.listLessons);
+courseRoutes.post("/:courseId/lessons", authorize("admin", "teacher"), lessons.saveLesson);
+courseRoutes.put("/:courseId/lessons/:lessonId", authorize("admin", "teacher"), lessons.saveLesson);
+courseRoutes.delete("/:courseId/lessons/:lessonId", authorize("admin", "teacher"), lessons.deleteLesson);
 courseRoutes.patch("/:id/review", authorize("admin"), courses.reviewCourse);
 courseRoutes.get(
   "/:id",
@@ -70,11 +54,7 @@ courseRoutes.get(
 );
 courseRoutes.post("/", authorize("admin", "teacher"), courses.createCourse);
 courseRoutes.put("/:id", authorize("admin", "teacher"), courses.updateCourse);
-courseRoutes.delete(
-  "/:id",
-  authorize("admin", "teacher"),
-  courses.deleteCourse,
-);
+courseRoutes.delete("/:id", authorize("admin", "teacher"), courses.deleteCourse);
 routes.use("/courses", courseRoutes);
 
 const userRoutes = express.Router();
@@ -87,11 +67,7 @@ userRoutes.delete("/:id", users.deleteUser);
 routes.use("/users", userRoutes);
 
 const categoryRoutes = express.Router();
-categoryRoutes.get(
-  "/",
-  authorize("admin", "course", "teacher", "student"),
-  categories.listCategories,
-);
+categoryRoutes.get("/", authorize("admin", "course", "teacher", "student"), categories.listCategories);
 categoryRoutes.post("/", authorize("admin"), categories.createCategory);
 categoryRoutes.put("/:id", authorize("admin"), categories.updateCategory);
 categoryRoutes.delete("/:id", authorize("admin"), categories.deleteCategory);
@@ -100,26 +76,10 @@ routes.use("/categories", categoryRoutes);
 const enrollmentRoutes = express.Router();
 enrollmentRoutes.get("/", authorize("admin"), enrollments.listEnrollments);
 enrollmentRoutes.post("/", authorize("student"), learning.enrollCourse);
-enrollmentRoutes.get(
-  "/my-courses",
-  authorize("student"),
-  learning.getMyCourses,
-);
-enrollmentRoutes.get(
-  "/:courseId",
-  authorize("student"),
-  learning.getEnrollmentByCourse,
-);
-enrollmentRoutes.patch(
-  "/:id",
-  authorize("admin"),
-  enrollments.updateEnrollment,
-);
-enrollmentRoutes.post(
-  "/:courseId",
-  authorize("student"),
-  learning.enrollCourse,
-);
+enrollmentRoutes.get("/my-courses", authorize("student"), learning.getMyCourses);
+enrollmentRoutes.get("/:courseId", authorize("student"), learning.getEnrollmentByCourse,);
+enrollmentRoutes.patch("/:id", authorize("admin"), enrollments.updateEnrollment);
+enrollmentRoutes.post("/:courseId", authorize("student"), learning.enrollCourse);
 enrollmentRoutes.get("/me", authorize("student"), learning.getMyLearning);
 routes.use("/enrollments", enrollmentRoutes);
 
@@ -132,44 +92,16 @@ lessonRoutes.get(
       ? learning.getCourseLessons(req, res, next)
       : lessons.listLessons(req, res, next),
 );
-lessonRoutes.post(
-  "/:courseId",
-  authorize("admin", "teacher"),
-  lessons.saveLesson,
-);
-lessonRoutes.put(
-  "/:courseId/:lessonId",
-  authorize("admin", "teacher"),
-  lessons.saveLesson,
-);
-lessonRoutes.delete(
-  "/:courseId/:lessonId",
-  authorize("admin", "teacher"),
-  lessons.deleteLesson,
-);
+lessonRoutes.post("/:courseId",authorize("admin", "teacher"),lessons.saveLesson);
+lessonRoutes.put("/:courseId/:lessonId",authorize("admin", "teacher"),lessons.saveLesson);
+lessonRoutes.delete("/:courseId/:lessonId",authorize("admin", "teacher"),lessons.deleteLesson);
 routes.use("/lessons", lessonRoutes);
 
 const progressRoutes = express.Router();
-progressRoutes.get(
-  "/courses/:courseId",
-  authorize("student"),
-  learning.getCourseLessons,
-);
-progressRoutes.post(
-  "/enrollments/:enrollmentId/lessons/:lessonId/complete",
-  authorize("student"),
-  learning.completeLesson,
-);
-progressRoutes.post(
-  "/enrollments/:enrollmentId/lessons/:lessonId/view",
-  authorize("student"),
-  learning.rememberLesson,
-);
-progressRoutes.put(
-  "/enrollments/:enrollmentId",
-  authorize("admin", "teacher"),
-  learning.updateProgress,
-);
+progressRoutes.get("/courses/:courseId",authorize("student"),learning.getCourseLessons);
+progressRoutes.post("/enrollments/:enrollmentId/lessons/:lessonId/complete",authorize("student"),learning.completeLesson);
+progressRoutes.post("/enrollments/:enrollmentId/lessons/:lessonId/view",authorize("student"),learning.rememberLesson);
+progressRoutes.put("/enrollments/:enrollmentId",authorize("admin", "teacher"),learning.updateProgress);
 routes.use("/progress", progressRoutes);
 
 module.exports = routes;

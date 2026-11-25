@@ -86,6 +86,15 @@
   color: #2257c7;
 }
 
+.lesson-list button.locked {
+  color: #667085;
+}
+
+.locked-mark {
+  color: #667085;
+  font-size: 12px;
+}
+
 .done-mark {
   color: #16805d;
 }

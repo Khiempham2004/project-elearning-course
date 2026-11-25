@@ -1,6 +1,9 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, computed, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AdminDashboardData, DashboardService } from '../../../core/services/Dashboard.service';
+import {
+  AdminDashboardData,
+  DashboardService,
+} from '../../../core/services/Dashboard.service';
 
 @Component({
   selector: 'app-overview',
@@ -18,16 +21,25 @@ export class OverviewComponent implements OnInit {
 
   ngOnInit(): void {
     this.dashboardService.getDashboard().subscribe({
-      next: ({ data }) => { this.dashboard.set(data); this.loading.set(false); },
-      error: (error) => { this.error.set(error?.error?.message ?? 'Không tải được dashboard.'); this.loading.set(false); },
+      next: ({ data }) => {
+        this.dashboard.set(data);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        this.error.set(error?.error?.message ?? 'Không tải được dashboard.');
+        this.loading.set(false);
+      },
     });
   }
-
-  get maxStudents(): number {
-    return Math.max(1, ...(this.dashboard()?.studentTrend.map((item) => item.count) ?? [0]));
-  }
+  readonly maxStudents = computed(() => {
+    const trend = this.dashboard()?.studentTrend ?? [];
+    return Math.max(1, ...trend.map((item) => item.count));
+  });
 
   barHeight(value: number): number {
-    return value === 0 ? 3 : Math.max(8, Math.round((value / this.maxStudents) * 100));
+    if (value === 0) {
+      return 3;
+    }
+    return Math.max(8, Math.round((value / this.maxStudents()) * 100));
   }
 }

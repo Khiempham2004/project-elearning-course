@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { MyLearning, StudentLearningService } from '../../../core/services/student-learning.service';
+import { normalizeEnrollmentStatus } from '../../../core/utils/enrollment-status.util';
 
 @Component({
   selector: 'app-course-progress',
@@ -20,4 +21,16 @@ export class CourseProgressComponent implements OnInit {
     });
   }
 
+  statusLabel(status: string): string {
+    switch (normalizeEnrollmentStatus(status)) {
+      case 'not-started':
+        return 'Chưa bắt đầu';
+      case 'completed':
+        return 'Đã hoàn thành';
+      case 'active':
+        return 'Đang học';
+      default:
+        return 'Không xác định';
+    }
+  }
 }

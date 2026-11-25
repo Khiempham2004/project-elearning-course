@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../types/api-response';
+import { EnrollmentStatus } from '../utils/enrollment-status.util';
 
 export interface LearningCourse {
   _id: string;
@@ -16,7 +17,7 @@ export interface LearningCourse {
   startDate?: string;
   endDate?: string;
   maxStudents?: number;
-  enrollmentStatus?: 'active' | 'completed' | null;
+  enrollmentStatus?: EnrollmentStatus | 'NotStarted' | 'InProgress' | 'Completed' | null;
   progress?: number;
   enrolledCount?: number;
   level?: 'beginner' | 'intermediate' | 'advanced';

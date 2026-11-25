@@ -1,6 +1,7 @@
 import { Component, computed, OnInit, signal } from '@angular/core';
 import { StudentLearningService } from '../../../core/services/student-learning.service';
 import { Router, RouterLink } from '@angular/router';
+import { EnrollmentStatus, normalizeEnrollmentStatus } from '../../../core/utils/enrollment-status.util';
 
 interface StudentCourse {
   id: string;
@@ -14,7 +15,7 @@ interface StudentCourse {
   color: string;
   icon: string;
   status: 'Đang học' | 'Chưa bắt đầu' | 'Hoàn thành';
-  enrollmentStatus: 'active' | 'completed' | null;
+  enrollmentStatus: EnrollmentStatus | null;
   level: string;
   price: number;
   popularity: number;
@@ -44,23 +45,31 @@ export class CourseStudentComponent implements OnInit {
   ngOnInit(): void {
     this.learningService.getCatalog().subscribe({
       next: ({ data }) => {
-        this.courses.set(data.map((course) => ({
-          id: course._id,
-          title: course.courseName,
-          category: course.category || 'Khác',
-          instructor: course.teacherName || 'Chưa cập nhật',
-          description: `${course.courseCode}${course.duration ? ` · ${course.duration} giờ` : ''}`,
-          lessons: course.lessonCount ?? 0,
-          duration: course.duration ? `${course.duration} giờ` : 'Theo chương trình',
-          progress: course.progress ?? 0,
-          enrollmentStatus: course.enrollmentStatus ?? null,
-          level: course.level ?? 'beginner',
-          price: course.price ?? 0,
-          popularity: course.enrolledCount ?? 0,
-          color: 'blue',
-          icon: 'E',
-          status: course.enrollmentStatus === 'completed' ? 'Hoàn thành' : course.enrollmentStatus ? 'Đang học' : 'Chưa bắt đầu',
-        })));
+        this.courses.set(data.map((course) => {
+          const enrollmentStatus = normalizeEnrollmentStatus(course.enrollmentStatus);
+          const status = enrollmentStatus === 'completed'
+            ? 'Hoàn thành'
+            : enrollmentStatus === 'active'
+              ? 'Đang học'
+              : 'Chưa bắt đầu';
+          return {
+            id: course._id,
+            title: course.courseName,
+            category: course.category || 'Khác',
+            instructor: course.teacherName || 'Chưa cập nhật',
+            description: `${course.courseCode}${course.duration ? ` · ${course.duration} giờ` : ''}`,
+            lessons: course.lessonCount ?? 0,
+            duration: course.duration ? `${course.duration} giờ` : 'Theo chương trình',
+            progress: course.progress ?? 0,
+            enrollmentStatus,
+            level: course.level ?? 'beginner',
+            price: course.price ?? 0,
+            popularity: course.enrolledCount ?? 0,
+            color: 'blue',
+            icon: 'E',
+            status,
+          };
+        }));
         this.loading.set(false);
       },
       error: (error) => {

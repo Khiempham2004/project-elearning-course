@@ -7,7 +7,16 @@
     <p class="error-message" role="alert">{{ error() }}</p>
   }
 
-  @if (!loading() && !error() && !lessons().length) {
+  @if (!loading() && !error() && !enrollment()) {
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">▤</span>
+      <h1>Bạn chưa đăng ký khóa học này</h1>
+      <p>Hãy xem thông tin khóa học và hoàn tất đăng ký trước khi bắt đầu học.</p>
+      <a [routerLink]="['/student/courses', courseId()]">Xem chi tiết và đăng ký</a>
+    </div>
+  }
+
+  @if (!loading() && !error() && enrollment() && !lessons().length) {
     <div class="empty-state">
       <span class="empty-icon" aria-hidden="true">▤</span>
       <h1>Bài học đang được chuẩn bị</h1>
@@ -16,7 +25,7 @@
     </div>
   }
 
-  @if (lessons().length && courseComplete()) {
+  @if (enrollment() && lessons().length && courseComplete()) {
     <section class="course-completion" role="status">
       <span aria-hidden="true">✓</span>
       <p class="eyebrow">ĐÃ HOÀN THÀNH</p>
@@ -26,7 +35,7 @@
     </section>
   }
 
-  @if (lessons().length && !courseComplete()) {
+  @if (enrollment() && lessons().length && !courseComplete()) {
     <header class="workspace-header">
       <p class="eyebrow">KHÔNG GIAN HỌC TẬP</p>
       <h1>{{ selected()?.title }}</h1>
@@ -46,8 +55,12 @@
             type="button"
             (click)="select(lesson)"
             [class.active]="selected()?._id === lesson._id"
+            [class.locked]="!canAccessLesson(lesson)"
           >
             <span>{{ lesson.section }} · {{ lesson.title }}</span>
+            @if (!canAccessLesson(lesson)) {
+              <span class="locked-mark" aria-label="Bài học đang khóa">Khóa</span>
+            }
             @if (isDone(lesson)) {
               <span class="done-mark" aria-label="Đã hoàn thành">✓</span>
             }

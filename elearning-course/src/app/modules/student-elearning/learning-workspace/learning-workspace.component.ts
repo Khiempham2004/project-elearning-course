@@ -5,6 +5,7 @@ import {
   StudentLearningService,
 } from '../../../core/services/student-learning.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { normalizeEnrollmentStatus } from '../../../core/utils/enrollment-status.util';
 
 @Component({
   selector: 'app-learning-workspace',
@@ -22,6 +23,7 @@ export class LearningWorkspaceComponent implements OnInit {
   readonly selected = signal<CourseLesson | null>(null);
   readonly saving = signal(false);
   readonly courseComplete = signal(false);
+  readonly courseId = signal('');
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -35,20 +37,24 @@ export class LearningWorkspaceComponent implements OnInit {
       this.loading.set(false);
       return;
     }
+    this.courseId.set(courseId);
 
     this.api.getCourseLessons(courseId).subscribe({
       next: ({ data }) => {
         this.lessons.set(data.lessons);
         this.enrollment.set(data.enrollment);
         this.courseComplete.set(
-          data.enrollment?.status === 'completed' ||
+          normalizeEnrollmentStatus(data.enrollment?.status) === 'completed' ||
             data.enrollment?.progress >= 100,
         );
         const lastLessonId = data.enrollment?.lastLessonId;
         const lastLesson = data.lessons.find(
-          (lesson) => lesson._id === lastLessonId,
+          (lesson) => String(lesson._id) === String(lastLessonId),
         );
-        const lesson = lastLesson ?? data.lessons[0] ?? null;
+        const lesson =
+          (lastLesson && this.canAccessLesson(lastLesson) ? lastLesson : null) ??
+          data.lessons.find((item) => this.canAccessLesson(item)) ??
+          null;
         this.selected.set(lesson);
         if (lesson && data.enrollment) {
           this.rememberLesson(data.enrollment._id, lesson._id);
@@ -71,7 +77,7 @@ export class LearningWorkspaceComponent implements OnInit {
   select(lesson: CourseLesson): void {
     if (!this.canAccessLesson(lesson)) {
       this.message.warning(
-        'Bạn cần hoàn thành bài học trước đó để mở khóa bài học tiếp theo!',
+        'Bạn cần hoàn thành các bài học trước đó để mở khóa bài học này!',
       );
       return;
     }
@@ -132,11 +138,8 @@ export class LearningWorkspaceComponent implements OnInit {
     const lessons = this.lessons();
     const currentIndex = lessons.findIndex((item) => item._id === lesson._id);
     if (currentIndex === -1) return false;
-    // Bài đầu tiên luôn được phép học
-    if (currentIndex === 0) return true;
-    // Phải hoàn thành bài học ngay trước đó
-    const previousLesson = lessons[currentIndex - 1];
-
-    return this.isDone(previousLesson);
+    return lessons
+      .slice(0, currentIndex)
+      .every((previousLesson) => this.isDone(previousLesson));
   }
 }

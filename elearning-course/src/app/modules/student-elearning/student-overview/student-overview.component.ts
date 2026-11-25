@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MyLearning, StudentLearningService } from '../../../core/services/student-learning.service';
+import { normalizeEnrollmentStatus } from '../../../core/utils/enrollment-status.util';
 
 @Component({
   selector: 'app-student-overview',
@@ -30,6 +31,6 @@ export class StudentOverviewComponent implements OnInit {
   get averageProgress() {
     return this.courses.length ? Math.round(this.courses.reduce((total, item) => total + item.progress, 0) / this.courses.length) : 0;
   }
-  get completedCount() { return this.courses.filter((item) => item.status === 'completed').length; }
-  get inProgressCount() { return this.courses.filter((item) => item.status === 'active').length; }
+  get completedCount() { return this.courses.filter((item) => normalizeEnrollmentStatus(item.status) === 'completed').length; }
+  get inProgressCount() { return this.courses.filter((item) => normalizeEnrollmentStatus(item.status) === 'active').length; }
 }
